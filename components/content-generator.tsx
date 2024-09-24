@@ -125,19 +125,19 @@ export default function ContentGeneratorComponent() {
           <div>
             <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
             <Select onValueChange={setAspectRatio} value={aspectRatio}>
-  <SelectTrigger>
-    <SelectValue placeholder="Select Aspect Ratio" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="1:1">1:1</SelectItem>
-    <SelectItem value="16:9">16:9</SelectItem>
-    <SelectItem value="9:16">9:16</SelectItem>
-    <SelectItem value="4:3">4:3</SelectItem>
-    <SelectItem value="3:4">3:4</SelectItem>
-    <SelectItem value="21:9">21:9</SelectItem>
-    <SelectItem value="9:21">9:21</SelectItem>
-  </SelectContent>
-</Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Aspect Ratio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1:1">1:1</SelectItem>
+                <SelectItem value="16:9">16:9</SelectItem>
+                <SelectItem value="9:16">9:16</SelectItem>
+                <SelectItem value="4:3">4:3</SelectItem>
+                <SelectItem value="3:4">3:4</SelectItem>
+                <SelectItem value="21:9">21:9</SelectItem>
+                <SelectItem value="9:21">9:21</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )}
         <Button type="submit" disabled={loading} className="w-full">

@@ -33,7 +33,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <main className="min-h-screen flex flex-col items-center">
-            <nav className="fixed top-0 left-0 w-full flex justify-center border-b border-b-foreground/10 h-16 bg-background z-50">
+            <nav className="top-0 left-0 w-full flex justify-center border-b border-b-foreground/10 h-16 bg-background z-50">
               <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
                 <div className="flex gap-5 items-center font-semibold">
                   <Link href={"/"} className="text-2xl">GenX</Link>
