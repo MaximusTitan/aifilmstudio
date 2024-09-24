@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -22,7 +21,7 @@ export default function ContentGeneratorComponent() {
   const [activeTab, setActiveTab] = useState("image");
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("realistic");
-  const [aspectRatio, setAspectRatio] = useState("16:9"); // Add aspect ratio state
+  const [aspectRatio, setAspectRatio] = useState("16:9");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
@@ -35,7 +34,6 @@ export default function ContentGeneratorComponent() {
 
     try {
       if (activeTab === "image") {
-        // For image generation, using GradioClient
         const client = await Client.connect("black-forest-labs/FLUX.1-schnell");
         const result = await client.predict("/infer", {
           prompt: prompt,
@@ -49,10 +47,9 @@ export default function ContentGeneratorComponent() {
         const imageUrl = (result.data as { url: string }[])[0].url;
         setGeneratedContent(imageUrl);
       } else {
-        // For video generation, using the local API route
         const response = await axios.post("/api/generate-video", {
           prompt,
-          aspect_ratio: aspectRatio, // Include aspect ratio in the request
+          aspect_ratio: aspectRatio,
         });
 
         if (response.status !== 200) {
@@ -88,7 +85,7 @@ export default function ContentGeneratorComponent() {
           <p className="text-sm text-muted-foreground">Generate stunning images with AI</p>
         </TabsContent>
         <TabsContent value="video" className="mt-4">
-          <p className="text-sm text-muted-foreground">Create amazing videos using AI technology</p>
+          <p className="text-sm text-muted-foreground">Create amazing videos using AI</p>
         </TabsContent>
       </Tabs>
       <form onSubmit={handleSubmit} className="space-y-4">
