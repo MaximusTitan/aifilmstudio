@@ -14,8 +14,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "GenX",
-  description: "Generate Images and Videos with AI in seconds using GenX",
+  title: "GoCreate",
+  description: "Generate Images and Videos with AI in seconds using GoCreate",
 };
 
 export default function RootLayout({
@@ -36,7 +36,7 @@ export default function RootLayout({
             <nav className="top-0 left-0 w-full flex justify-center border-b border-b-foreground/10 h-16 bg-background z-50">
               <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
                 <div className="flex gap-5 items-center font-semibold">
-                  <Link href={"/"} className="text-2xl">GenX</Link>
+                  <Link href={"/"} className="text-2xl">GoCreate</Link>
                 </div>
                 {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
               </div>
