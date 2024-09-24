@@ -4,6 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +22,7 @@ export default function ContentGeneratorComponent() {
   const [activeTab, setActiveTab] = useState("image");
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("realistic");
+  const [aspectRatio, setAspectRatio] = useState("16:9"); // Add aspect ratio state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
@@ -42,7 +50,10 @@ export default function ContentGeneratorComponent() {
         setGeneratedContent(imageUrl);
       } else {
         // For video generation, using the local API route
-        const response = await axios.post("/api/generate-video", { prompt });
+        const response = await axios.post("/api/generate-video", {
+          prompt,
+          aspect_ratio: aspectRatio, // Include aspect ratio in the request
+        });
 
         if (response.status !== 200) {
           throw new Error("Failed to generate video");
@@ -108,6 +119,25 @@ export default function ContentGeneratorComponent() {
                 <Label htmlFor="abstract">Abstract</Label>
               </div>
             </RadioGroup>
+          </div>
+        )}
+        {activeTab === "video" && (
+          <div>
+            <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
+            <Select onValueChange={setAspectRatio} value={aspectRatio}>
+  <SelectTrigger>
+    <SelectValue placeholder="Select Aspect Ratio" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="1:1">1:1</SelectItem>
+    <SelectItem value="16:9">16:9</SelectItem>
+    <SelectItem value="9:16">9:16</SelectItem>
+    <SelectItem value="4:3">4:3</SelectItem>
+    <SelectItem value="3:4">3:4</SelectItem>
+    <SelectItem value="21:9">21:9</SelectItem>
+    <SelectItem value="9:21">9:21</SelectItem>
+  </SelectContent>
+</Select>
           </div>
         )}
         <Button type="submit" disabled={loading} className="w-full">

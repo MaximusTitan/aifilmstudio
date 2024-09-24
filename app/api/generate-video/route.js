@@ -3,13 +3,14 @@ import axios from "axios";
 import LumaAI from "lumaai";
 
 export const maxDuration = 300;
+
 export async function POST(request) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, aspect_ratio } = await request.json();
 
-    if (!prompt) {
+    if (!prompt || !aspect_ratio) {
       return NextResponse.json(
-        { message: "Prompt is required" },
+        { message: "Prompt and aspect ratio are required" },
         { status: 400 }
       );
     }
@@ -20,9 +21,9 @@ export async function POST(request) {
 
     console.log("LumaAI client initialized");
 
-    // Step 1: Create the generation
+    // Step 1: Create the generation with the given aspect ratio
     const generation = await client.generations.create({
-      aspect_ratio: "16:9",
+      aspect_ratio: aspect_ratio,
       prompt,
     });
 
