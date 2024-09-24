@@ -10,12 +10,12 @@ import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+  : "https://genx-zeta.vercel.app";
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "GenX",
+  description: "Generate Images and Videos with AI in seconds using GenX",
 };
 
 export default function RootLayout({
