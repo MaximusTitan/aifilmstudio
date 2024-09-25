@@ -7,7 +7,7 @@ const replicate = new Replicate({
 
 export async function POST(request) {
   try {
-    const { prompt, aspectRatio } = await request.json();
+    const { prompt, aspect_ratio } = await request.json();
 
     if (!prompt) {
       return NextResponse.json(
@@ -19,7 +19,7 @@ export async function POST(request) {
     const output = await replicate.run("black-forest-labs/flux-schnell", {
       input: {
         prompt: prompt,
-        aspect_ratio: aspectRatio,
+        aspect_ratio: aspect_ratio,
       },
     });
 

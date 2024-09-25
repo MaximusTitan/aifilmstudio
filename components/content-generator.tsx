@@ -19,7 +19,7 @@ import axios from "axios";
 export default function ContentGeneratorComponent() {
   const [activeTab, setActiveTab] = useState("image");
   const [prompt, setPrompt] = useState("");
-  const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [aspect_ratio, setaspect_ratio] = useState("16:9");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
@@ -33,7 +33,7 @@ export default function ContentGeneratorComponent() {
     try {
       if (activeTab === "image") {
         const response = await axios.post("/api/generate-image", {
-          prompt, aspectRatio: aspectRatio
+          prompt, aspect_ratio: aspect_ratio
         });
 
         if (response.status !== 200) {
@@ -45,7 +45,7 @@ export default function ContentGeneratorComponent() {
       } else {
         const response = await axios.post("/api/generate-video", {
           prompt,
-          aspect_ratio: aspectRatio,
+          aspect_ratio: aspect_ratio,
         });
 
         if (response.status !== 200) {
@@ -102,7 +102,7 @@ export default function ContentGeneratorComponent() {
         {activeTab === "image" && (
         <div>
           <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
-            <Select onValueChange={setAspectRatio} value={aspectRatio}>
+            <Select onValueChange={setaspect_ratio} value={aspect_ratio}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Aspect Ratio" />
               </SelectTrigger>
@@ -121,7 +121,7 @@ export default function ContentGeneratorComponent() {
         {activeTab === "video" && (
           <div>
             <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
-            <Select onValueChange={setAspectRatio} value={aspectRatio}>
+            <Select onValueChange={setaspect_ratio} value={aspect_ratio}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Aspect Ratio" />
               </SelectTrigger>
