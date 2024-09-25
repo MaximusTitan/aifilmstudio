@@ -15,16 +15,13 @@ export const signUpAction = async (formData: FormData) => {
     return { error: "Email and password are required" };
   }
 
-  // Determine the user's credits and is_unlimited status based on the email domain
-  let credits: number | null = 30; // Default credits for other domains
-  let isUnlimited = false;
+  let credits: number | null = 30;
 
   const allowedDomains = ["igebra.ai", "prosoftpeople.com"];
   const emailDomain = email.split("@")[1];
 
   if (allowedDomains.includes(emailDomain)) {
-    credits = null; // Null or some other indication for unlimited
-    isUnlimited = true;
+    credits = 999;
   }
 
   const { error: signupError } = await supabase.auth.signUp({
@@ -40,18 +37,15 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect("error", "/sign-up", signupError.message);
   }
 
-  // Create an entry in the users table with the determined credits and is_unlimited status
   const { error: insertError } = await supabase
     .from('users')
-    .insert([{ email, credits, is_unlimited: isUnlimited }]);
+    .insert([{ email, credits}]);
 
-  // Handle errors when inserting into the users table
   if (insertError) {
     console.error(insertError.message);
     return encodedRedirect("error", "/sign-up", insertError.message);
   }
 
-  // Successful sign up and user creation
   return encodedRedirect(
     "success",
     "/sign-up",

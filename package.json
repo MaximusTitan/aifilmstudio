@@ -26,7 +26,8 @@
     "next-themes": "^0.3.0",
     "prettier": "^3.3.3",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "replicate": "^0.33.0"
   },
   "devDependencies": {
     "@gradio/client": "^1.6.0-beta.2",

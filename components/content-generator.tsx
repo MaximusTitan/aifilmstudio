@@ -9,18 +9,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Image, Loader2, Video } from "lucide-react";
 import axios from "axios";
-import { Client } from "@gradio/client";
 
 export default function ContentGeneratorComponent() {
   const [activeTab, setActiveTab] = useState("image");
   const [prompt, setPrompt] = useState("");
-  const [style, setStyle] = useState("realistic");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,17 +32,15 @@ export default function ContentGeneratorComponent() {
 
     try {
       if (activeTab === "image") {
-        const client = await Client.connect("black-forest-labs/FLUX.1-schnell");
-        const result = await client.predict("/infer", {
-          prompt: prompt,
-          seed: 0,
-          randomize_seed: true,
-          width: 1920,
-          height: 1080,
-          num_inference_steps: 4,
+        const response = await axios.post("/api/generate-image", {
+          prompt, aspectRatio: aspectRatio
         });
 
-        const imageUrl = (result.data as { url: string }[])[0].url;
+        if (response.status !== 200) {
+          throw new Error("Failed to generate image");
+        }
+
+        const imageUrl = response.data.imageUrl;
         setGeneratedContent(imageUrl);
       } else {
         const response = await axios.post("/api/generate-video", {
@@ -82,10 +78,14 @@ export default function ContentGeneratorComponent() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="image" className="mt-4">
-          <p className="text-sm text-muted-foreground">Generate stunning images with AI</p>
+          <p className="text-sm text-muted-foreground">
+            Generate stunning images with AI
+          </p>
         </TabsContent>
         <TabsContent value="video" className="mt-4">
-          <p className="text-sm text-muted-foreground">Create amazing videos using AI</p>
+          <p className="text-sm text-muted-foreground">
+            Create amazing videos using AI
+          </p>
         </TabsContent>
       </Tabs>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,22 +100,22 @@ export default function ContentGeneratorComponent() {
           />
         </div>
         {activeTab === "image" && (
-          <div>
-            <Label>Style</Label>
-            <RadioGroup value={style} onValueChange={setStyle} className="flex space-x-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="realistic" id="realistic" />
-                <Label htmlFor="realistic">Realistic</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="cartoon" id="cartoon" />
-                <Label htmlFor="cartoon">Cartoon</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="abstract" id="abstract" />
-                <Label htmlFor="abstract">Abstract</Label>
-              </div>
-            </RadioGroup>
+        <div>
+          <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
+            <Select onValueChange={setAspectRatio} value={aspectRatio}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Aspect Ratio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1:1">1:1</SelectItem>
+                <SelectItem value="16:9">16:9</SelectItem>
+                <SelectItem value="9:16">9:16</SelectItem>
+                <SelectItem value="4:3">4:3</SelectItem>
+                <SelectItem value="3:4">3:4</SelectItem>
+                <SelectItem value="21:9">21:9</SelectItem>
+                <SelectItem value="9:21">9:21</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )}
         {activeTab === "video" && (
@@ -147,9 +147,17 @@ export default function ContentGeneratorComponent() {
         <div className="mt-8">
           <h2 className="text-2xl font-semibold mb-4">Generated Content</h2>
           {activeTab === "image" ? (
-            <img src={generatedContent} alt="Generated content" className="w-full h-auto rounded-lg shadow-lg" />
+            <img
+              src={generatedContent}
+              alt="Generated content"
+              className="w-full h-auto rounded-lg shadow-lg"
+            />
           ) : (
-            <video src={generatedContent} controls className="w-full h-auto rounded-lg shadow-lg">
+            <video
+              src={generatedContent}
+              controls
+              className="w-full h-auto rounded-lg shadow-lg"
+            >
               Your browser does not support the video tag.
             </video>
           )}

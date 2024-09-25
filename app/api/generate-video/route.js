@@ -16,12 +16,11 @@ export async function POST(request) {
     }
 
     const client = new LumaAI({
-      authToken: process.env.LUMAAI_API_KEY, // Ensure this is set in your .env.local
+      authToken: process.env.LUMAAI_API_KEY,
     });
 
     console.log("LumaAI client initialized");
 
-    // Step 1: Create the generation with the given aspect ratio
     const generation = await client.generations.create({
       aspect_ratio: aspect_ratio,
       prompt,
@@ -29,16 +28,13 @@ export async function POST(request) {
 
     console.log("Generation created:", generation);
 
-    // Step 2: Retrieve the generation ID
     const generationId = generation.id;
 
     console.log("Generation ID:", generationId);
 
-    // Poll for completion
     let isCompleted = false;
     let videoUrl = "";
     while (!isCompleted) {
-      // Step 3: Fetch the current state of the generation
       const options = {
         method: "GET",
         url: `https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`,
@@ -55,7 +51,7 @@ export async function POST(request) {
 
       if (state === "completed") {
         isCompleted = true;
-        videoUrl = assets?.video || ""; // Use optional chaining to avoid undefined error
+        videoUrl = assets?.video || "";
       } else if (state === "failed") {
         return NextResponse.json(
           { message: "Video generation failed" },
@@ -63,11 +59,9 @@ export async function POST(request) {
         );
       }
 
-      // Wait before the next poll (you can adjust the timeout as needed)
       await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 
-    // Step 4: Return the video URL
     if (videoUrl) {
       return NextResponse.json({ videoUrl });
     } else {
