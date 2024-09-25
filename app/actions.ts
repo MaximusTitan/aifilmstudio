@@ -24,7 +24,8 @@ export const signUpAction = async (formData: FormData) => {
     credits = 999;
   }
 
-  const { error: signupError } = await supabase.auth.signUp({
+  // Create user in Supabase Auth
+  const { data: authData, error: signupError } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -37,9 +38,17 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect("error", "/sign-up", signupError.message);
   }
 
+  // Get the user ID from Supabase Auth
+  const userId = authData.user?.id;
+
+  if (!userId) {
+    return encodedRedirect("error", "/sign-up", "Unable to retrieve user ID");
+  }
+
+  // Insert the user into the 'users' table with the correct ID
   const { error: insertError } = await supabase
-    .from('users')
-    .insert([{ email, credits}]);
+    .from("users")
+    .insert([{ id: userId, email, credits }]);
 
   if (insertError) {
     console.error(insertError.message);

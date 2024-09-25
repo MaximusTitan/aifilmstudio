@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +20,7 @@ type Generation = {
   type: "image" | "video";
   url: string;
   prompt: string;
+  created_at: string;
 };
 
 export default function ContentGenerator() {
@@ -30,6 +31,27 @@ export default function ContentGenerator() {
   const [error, setError] = useState("");
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [latestGeneration, setLatestGeneration] = useState<Generation | null>(null);
+
+  // Fetch user's past generations
+  useEffect(() => {
+    const fetchGenerations = async () => {
+      try {
+        const response = await axios.get("/api/get-generations"); // Fetch generations from your API
+        const fetchedGenerations = response.data.generations.map((gen: any) => ({
+          id: gen.id,
+          type: gen.type,
+          url: gen.result_url,  // Use result_url for displaying the generated image/video
+          prompt: gen.parameters.prompt, // Access the prompt from parameters
+          created_at: gen.created_at,
+        }));
+        setGenerations(fetchedGenerations); // Update state with mapped generations
+      } catch (err) {
+        console.error("Failed to load past generations", err);
+      }
+    };
+
+    fetchGenerations();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,9 +74,10 @@ export default function ContentGenerator() {
         type: activeTab,
         url: activeTab === "image" ? response.data.imageUrl : response.data.videoUrl,
         prompt: prompt,
+        created_at: new Date().toISOString(),
       };
 
-      setGenerations(prev => [newGeneration, ...prev]);
+      setGenerations((prev) => [newGeneration, ...prev]);
       setLatestGeneration(newGeneration);
     } catch (err) {
       console.error(err);
@@ -69,7 +92,10 @@ export default function ContentGenerator() {
       <h1 className="text-3xl font-bold text-center">AI Content Generator</h1>
       <div className="flex gap-8">
         <div className="flex-1">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "image" | "video")}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as "image" | "video")}
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="image">
                 <Image className="mr-2 h-4 w-4" />
@@ -81,10 +107,14 @@ export default function ContentGenerator() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="image" className="mt-4">
-              <p className="text-sm text-muted-foreground">Generate stunning images with AI</p>
+              <p className="text-sm text-muted-foreground">
+                Generate stunning images with AI
+              </p>
             </TabsContent>
             <TabsContent value="video" className="mt-4">
-              <p className="text-sm text-muted-foreground">Create amazing videos using AI technology</p>
+              <p className="text-sm text-muted-foreground">
+                Create amazing videos using AI technology
+              </p>
             </TabsContent>
           </Tabs>
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -105,7 +135,7 @@ export default function ContentGenerator() {
                   <SelectValue placeholder="Select aspect ratio" />
                 </SelectTrigger>
                 <SelectContent>
-                <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                  <SelectItem value="1:1">1:1 (Square)</SelectItem>
                   <SelectItem value="4:3">4:3 (Standard)</SelectItem>
                   <SelectItem value="16:9">16:9 (Widescreen)</SelectItem>
                   <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
@@ -126,13 +156,23 @@ export default function ContentGenerator() {
           <div className="flex-1">
             <h2 className="text-2xl font-semibold mb-4">Latest Generation</h2>
             {latestGeneration.type === "image" ? (
-              <img src={latestGeneration.url} alt="Generated content" className="w-full h-auto rounded-lg shadow-lg" />
+              <img
+                src={latestGeneration.url}
+                alt="Generated content"
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
             ) : (
-              <video src={latestGeneration.url} controls className="w-full h-auto rounded-lg shadow-lg">
+              <video
+                src={latestGeneration.url}
+                controls
+                className="w-full h-auto rounded-lg shadow-lg"
+              >
                 Your browser does not support the video tag.
               </video>
             )}
-            <p className="mt-2 text-sm text-muted-foreground">Prompt: {latestGeneration.prompt}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Prompt: {latestGeneration.prompt}
+            </p>
           </div>
         )}
       </div>
@@ -142,13 +182,26 @@ export default function ContentGenerator() {
           {generations.map((gen) => (
             <div key={gen.id} className="border rounded-lg p-4">
               {gen.type === "image" ? (
-                <img src={gen.url} alt="Generated content" className="w-full h-auto rounded-lg shadow-lg" />
+                <img
+                  src={gen.url}
+                  alt="Generated content"
+                  className="w-full h-auto rounded-lg shadow-lg"
+                />
               ) : (
-                <video src={gen.url} controls className="w-full h-auto rounded-lg shadow-lg">
+                <video
+                  src={gen.url}
+                  controls
+                  className="w-full h-auto rounded-lg shadow-lg"
+                >
                   Your browser does not support the video tag.
                 </video>
               )}
-              <p className="mt-2 text-sm text-muted-foreground">Prompt: {gen.prompt}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Prompt: {gen.prompt}
+              </p>
+              <p className="text-xs text-gray-500">
+                Created At: {new Date(gen.created_at).toLocaleString()}
+              </p>
             </div>
           ))}
         </div>
