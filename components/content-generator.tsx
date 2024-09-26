@@ -147,6 +147,7 @@ export default function ContentGenerator() {
   const updateSelectedImage = (imageUrl: string) => {
     setSelectedImage(imageUrl);
     setActiveTab("image-to-video");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (

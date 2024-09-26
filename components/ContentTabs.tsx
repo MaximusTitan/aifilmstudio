@@ -46,7 +46,7 @@ export default function ContentTabs({
         <div>
           {activeTab === "image-to-video" && selectedImage && (
               <div>
-              <img src={selectedImage} alt="Selected" className="w-1/4 h-auto rounded-lg shadow-lg mt-2" />
+              <img src={selectedImage} alt="Selected" className="w-1/3 h-auto rounded-lg shadow-lg mt-2 mb-4" />
             </div>
           )}
           <Label htmlFor="image-prompt">Prompt</Label>
