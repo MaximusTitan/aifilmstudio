@@ -38,15 +38,14 @@ export default function GenerationList({
               Your browser does not support the video tag.
             </video>
           )}
-          <p className="text-sm mt-2">Prompt: {gen.prompt}</p>
 
           {/* Conditionally render the Image to Video button */}
           {gen.type !== "video" && (
             <Button
-              onClick={() => updateSelectedImage(gen.url)}
-              className="mt-2 mr-2"
-              size="sm"
-              variant={"outline"}
+            onClick={() => updateSelectedImage(gen.url)}
+            className="mt-2 mr-2"
+            size="sm"
+            variant={"outline"}
             >
               <Image className="mr-2 h-4 w-4" />
               to
@@ -63,6 +62,10 @@ export default function GenerationList({
             <Download className="mr-2 h-4 w-4" />
             Download
           </Button>
+          <p className="text-sm mt-2">Prompt: {gen.prompt}</p>
+          <p className="mt-2 text-xs text-gray-400">
+            {new Date(gen.created_at ?? "").toLocaleString()}
+          </p>
         </div>
       ))}
     </div>
