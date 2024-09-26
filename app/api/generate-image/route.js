@@ -30,6 +30,7 @@ export async function POST(request) {
     }
 
     const userId = user.id; // Fetch the user's UUID
+    const userEmail = user.email; // Fetch the user's email
     console.log("Authenticated user ID:", userId); // Debugging output
 
     if (!prompt) {
@@ -56,18 +57,55 @@ export async function POST(request) {
 
     const imageUrl = output[0];
 
+    // Fetch the image blob from the generated URL using native fetch
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error("Failed to fetch the image from the generated URL");
+    }
+
+    const imageBlob = await imageResponse.blob(); // Convert the response to a Blob
+
+    // Upload the image to Supabase Storage
+    const fileName = `generated-${Date.now()}.jpg`; // Create a unique file name
+    const { error: uploadError } = await supabase.storage
+      .from("generated-images")
+      .upload(fileName, imageBlob, {
+        contentType: "image/jpeg",
+      });
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError.message);
+      return NextResponse.json(
+        { message: "Error uploading image", error: uploadError.message },
+        { status: 500 }
+      );
+    }
+
+    // Constructing the public URL correctly
+    const { data: publicUrlData } = supabase.storage
+      .from("generated-images")
+      .getPublicUrl(fileName);
+
+    const publicURL = publicUrlData.publicUrl;
+
+    console.log("Generated Public URL:", publicURL);
+    if (!publicURL) {
+      console.error("Public URL is null");
+      return NextResponse.json(
+        { message: "Error getting public URL", error: "Public URL is null" },
+        { status: 500 }
+      );
+    }
+
     // Deduct credits and insert into the generations table
     const creditsUsed = 1; // Adjust this value based on your business logic
 
-    // Fetch user's credits (remove .single() to avoid the error)
+    // Fetch user's credits
     const { data: userData, error: userCreditsError } = await supabase
       .from("users")
       .select("credits")
       .eq("id", userId)
-      .limit(1); // Use limit(1) to get the first matching row
-
-    console.log("Querying credits for user ID:", userId); // Debugging output
-    console.log("User credits query result:", userData); // Debugging output
+      .limit(1);
 
     if (userCreditsError || !userData || userData.length === 0) {
       return NextResponse.json(
@@ -82,7 +120,6 @@ export async function POST(request) {
     }
 
     const userCredits = userData[0].credits;
-    console.log("User credits found:", userCredits); // Debugging output
 
     // Check if the user has enough credits
     if (userCredits < creditsUsed) {
@@ -99,26 +136,27 @@ export async function POST(request) {
       .eq("id", userId);
 
     if (deductError) {
-      console.error(deductError.message);
+      console.error("Deduct credits error:", deductError.message);
       return NextResponse.json(
         { message: "Error updating credits", error: deductError.message },
         { status: 500 }
       );
     }
 
-    // Insert generation record into the 'generations' table
+    // Insert generation record into the 'generations' table, including user_email
     const { error: insertError } = await supabase.from("generations").insert([
       {
         user_id: userId, // Use the UUID
+        user_email: userEmail, // Store the user's email
         type: "image",
         parameters: { prompt, aspect_ratio }, // Store the parameters as JSON
-        result_url: imageUrl,
+        result_path: publicURL, // Save the public URL to result_path
         credits_used: creditsUsed,
       },
     ]);
 
     if (insertError) {
-      console.error(insertError.message);
+      console.error("Insert generation record error:", insertError.message);
       return NextResponse.json(
         {
           message: "Error saving generation record",
@@ -129,11 +167,14 @@ export async function POST(request) {
     }
 
     // Return the generated image URL as a response
-    return NextResponse.json({ imageUrl });
+    return NextResponse.json({ imageUrl: publicURL });
   } catch (error) {
     console.error("Error generating or fetching image:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      {
+        message: "Internal Server Error",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
