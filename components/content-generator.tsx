@@ -236,11 +236,13 @@ export default function ContentGenerator() {
                       <SelectValue placeholder="Select aspect ratio" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                      <SelectItem value="4:3">4:3 (Standard)</SelectItem>
-                      <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
-                      <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
-                      <SelectItem value="3:4">3:4 (Portrait Standard)</SelectItem>
+                    <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                  <SelectItem value="4:3">4:3 (Standard)</SelectItem>
+                  <SelectItem value="16:9">16:9 (Widescreen)</SelectItem>
+                  <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
+                  <SelectItem value="3:4">3:4 (Vertical)</SelectItem>
+                  <SelectItem value="21:9">21:9 (Ultra-Widescreen)</SelectItem>
+                  <SelectItem value="9:21">9:21 (Ultra-Portrait)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -249,11 +251,11 @@ export default function ContentGenerator() {
             </Button>
               </>
             )}
-
             {error && <div className="text-red-500">{error}</div>}
           </form>
+          </div>
           {latestGeneration && (
-            <div className="mt-4">
+            <div className="flex-1">
               <h2 className="text-2xl font-semibold">Latest Generation</h2>
               <div className="mt-2">
                 {latestGeneration.type === "image" && (
@@ -276,11 +278,12 @@ export default function ContentGenerator() {
                 <Button
                   onClick={() => handleDownload(latestGeneration.url, `${latestGeneration.type}-${latestGeneration.id}`)}
                   className="mr-2"
+                  variant={"outline"}
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </Button>
-                <Button onClick={handleRegenerate}>
+                <Button onClick={handleRegenerate} variant={"outline"}>
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Regenerate
                 </Button>
@@ -288,43 +291,49 @@ export default function ContentGenerator() {
             </div>
           )}
         </div>
-        <div className="flex-1">
+        <div>
           <h2 className="text-2xl font-semibold">Previous Generations</h2>
-          <div className="space-y-4 mt-4">
-            {generations.map((gen) => (
-              <div key={gen.id} className="border rounded-lg p-4 shadow-md">
-                {gen.type === "image" && (
-                  <img src={gen.url} alt="Generated" className="rounded-lg shadow-lg" />
-                )}
-                {gen.type === "video" && (
-                  <video controls className="rounded-lg shadow-lg">
-                    <source src={gen.url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                )}
-                {gen.type === "image-to-video" && (
-                  <video controls className="rounded-lg shadow-lg">
-                    <source src={gen.url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                )}
-                <div className="mt-2">
-                  <Button onClick={() => updateSelectedImage(gen.url)}>Select Image</Button>
-                  <Button
-                    onClick={() => handleDownload(gen.url, `${gen.type}-${gen.id}`)}
-                    className="ml-2"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {generations
+              .slice() // Creates a copy of the array
+              .reverse() // Reverses the array to display latest first
+              .map((gen) => (
+                <div key={gen.id} className="border rounded-lg p-4 shadow-md">
+                  {gen.type === "image" && (
+                    <img src={gen.url} alt="Generated" className="rounded-lg shadow-lg" />
+                  )}
+                  {gen.type === "video" && (
+                    <video controls className="rounded-lg shadow-lg">
+                      <source src={gen.url} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  )}
+                  {gen.type === "image-to-video" && (
+                    <video controls className="rounded-lg shadow-lg">
+                      <source src={gen.url} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  )}
+                  <div className="mt-2">
+                    <Button variant={"outline"} onClick={() => updateSelectedImage(gen.url)}>Select Image</Button>
+                    <Button
+                      onClick={() => handleDownload(gen.url, `${gen.type}-${gen.id}`)}
+                      className="ml-2"
+                      variant={"outline"}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">{gen.prompt}</p>
+                  <p className="mt-2 text-sm text-gray-400">
+                    {new Date(gen.created_at ?? "").toLocaleString()}
+                  </p>
                 </div>
-                <p className="mt-2 text-sm text-gray-500">{gen.prompt}</p>
-                <p className="mt-2 text-sm text-gray-400">{new Date(gen.created_at ?? "").toLocaleString()}</p>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
+
       </div>
-    </div>
   );
 }

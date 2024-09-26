@@ -29,6 +29,7 @@ export async function POST(request) {
     }
 
     const userId = user.id; // Fetch the user's UUID
+    const userEmail = user.email; // Fetch the user's email
     console.log("Authenticated user ID:", userId); // Debugging output
 
     if (!prompt) {
@@ -142,6 +143,7 @@ export async function POST(request) {
       {
         user_id: userId, // Use the UUID
         type: "video",
+        user_email: userEmail, // Store the user's email
         parameters: { prompt, aspect_ratio }, // Store the parameters as JSON
         result_url: videoUrl,
         credits_used: creditsUsed,

@@ -32,6 +32,7 @@ export async function POST(request) {
     }
 
     const userId = user.id;
+    const userEmail = user.email; // Fetch the user's email
 
     if (!prompt || !imageUrl) {
       return NextResponse.json(
@@ -144,6 +145,7 @@ export async function POST(request) {
       {
         user_id: userId,
         type: "video",
+        user_email: userEmail, // Store the user's email
         parameters: { prompt, imageUrl, aspect_ratio },
         result_path: videoUrl,
         credits_used: creditsUsed,
