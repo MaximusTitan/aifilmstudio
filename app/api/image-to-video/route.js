@@ -7,15 +7,11 @@ export const maxDuration = 300;
 
 export async function POST(request) {
   try {
-    // Correctly extract the entire payload
     const { prompt, keyframes, aspect_ratio } = await request.json();
-    // Extract image URL from the keyframes
     const imageUrl = keyframes?.frame0?.url;
 
-    // Get Supabase client
     const supabase = createClient();
 
-    // Retrieve the authenticated user
     const {
       data: { user },
       error: userError,
@@ -32,7 +28,7 @@ export async function POST(request) {
     }
 
     const userId = user.id;
-    const userEmail = user.email; // Fetch the user's email
+    const userEmail = user.email;
 
     if (!prompt || !imageUrl) {
       return NextResponse.json(
@@ -43,7 +39,6 @@ export async function POST(request) {
 
     const client = new LumaAI({ authToken: process.env.LUMAAI_API_KEY });
 
-    // Create generation request for image-to-video
     const generation = await client.generations.create({
       aspect_ratio,
       prompt,
@@ -88,7 +83,7 @@ export async function POST(request) {
         );
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 3000)); // Polling interval
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 
     if (!videoUrl) {
@@ -100,12 +95,11 @@ export async function POST(request) {
 
     const creditsUsed = 5;
 
-    // Fetch user's credits
     const { data: userData, error: userCreditsError } = await supabase
       .from("users")
       .select("credits")
       .eq("id", userId)
-      .single(); // Fetch a single record
+      .single();
 
     if (userCreditsError || !userData) {
       return NextResponse.json(
@@ -119,7 +113,6 @@ export async function POST(request) {
 
     const userCredits = userData.credits;
 
-    // Check if the user has enough credits
     if (userCredits < creditsUsed) {
       return NextResponse.json(
         { message: "Not enough credits" },
@@ -127,7 +120,6 @@ export async function POST(request) {
       );
     }
 
-    // Deduct credits from the user's account
     const { error: deductError } = await supabase
       .from("users")
       .update({ credits: userCredits - creditsUsed })
@@ -140,12 +132,11 @@ export async function POST(request) {
       );
     }
 
-    // Insert generation record into the 'generations' table
     const { error: insertError } = await supabase.from("generations").insert([
       {
         user_id: userId,
         type: "video",
-        user_email: userEmail, // Store the user's email
+        user_email: userEmail,
         parameters: { prompt, imageUrl, aspect_ratio },
         result_path: videoUrl,
         credits_used: creditsUsed,

@@ -8,7 +8,6 @@ export default function LumaLogo() {
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
 
-  // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -22,7 +21,5 @@ export default function LumaLogo() {
       ? "https://cdn-luma.com/public/lumalabs.ai/media-kit/10.svg"
       : "https://cdn-luma.com/public/lumalabs.ai/media-kit/11.svg";
 
-  return (
-    <Image src={logoSrc} alt="Luma Logo" width={90} height={70} />
-  );
+  return <Image src={logoSrc} alt="Luma Logo" width={90} height={70} />;
 }

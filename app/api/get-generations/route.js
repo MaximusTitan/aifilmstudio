@@ -1,11 +1,8 @@
-// app/api/get-generations/route.js
 import { createClient } from "@/utils/supabase/server";
 
-// Named export for the GET method
 export async function GET(req) {
   const supabase = createClient();
 
-  // Get the authenticated user
   const {
     data: { user },
     error: userError,
@@ -17,11 +14,10 @@ export async function GET(req) {
     });
   }
 
-  // Fetch generations for the authenticated user using their user_id
   const { data, error } = await supabase
     .from("generations")
     .select("*")
-    .eq("user_id", user.id); // Use user.id to query by user ID
+    .eq("user_id", user.id);
 
   if (error) {
     return new Response(

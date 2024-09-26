@@ -9,10 +9,8 @@ export async function POST(request) {
   try {
     const { prompt, aspect_ratio } = await request.json();
 
-    // Get Supabase client
     const supabase = createClient();
 
-    // Retrieve the authenticated user
     const {
       data: { user },
       error: userError,
@@ -28,9 +26,9 @@ export async function POST(request) {
       );
     }
 
-    const userId = user.id; // Fetch the user's UUID
-    const userEmail = user.email; // Fetch the user's email
-    console.log("Authenticated user ID:", userId); // Debugging output
+    const userId = user.id;
+    const userEmail = user.email;
+    console.log("Authenticated user ID:", userId);
 
     if (!prompt) {
       return NextResponse.json(
@@ -93,10 +91,8 @@ export async function POST(request) {
       );
     }
 
-    // Deduct credits and insert into the generations table
-    const creditsUsed = 5; // Adjust this value based on your business logic
+    const creditsUsed = 5;
 
-    // Fetch user's credits
     const { data: userData, error: userCreditsError } = await supabase
       .from("users")
       .select("credits")
@@ -117,7 +113,6 @@ export async function POST(request) {
 
     const userCredits = userData[0].credits;
 
-    // Check if the user has enough credits
     if (userCredits < creditsUsed) {
       return NextResponse.json(
         { message: "Not enough credits" },
@@ -125,7 +120,6 @@ export async function POST(request) {
       );
     }
 
-    // Deduct credits from the user's account
     const { error: deductError } = await supabase
       .from("users")
       .update({ credits: userCredits - creditsUsed })
@@ -138,14 +132,13 @@ export async function POST(request) {
       );
     }
 
-    // Insert generation record into the 'generations' table
     const { error: insertError } = await supabase.from("generations").insert([
       {
-        user_id: userId, // Use the UUID
+        user_id: userId,
         type: "video",
-        user_email: userEmail, // Store the user's email
-        parameters: { prompt, aspect_ratio }, // Store the parameters as JSON
-        result_url: videoUrl,
+        user_email: userEmail,
+        parameters: { prompt, aspect_ratio },
+        result_path: videoUrl,
         credits_used: creditsUsed,
       },
     ]);
@@ -160,7 +153,6 @@ export async function POST(request) {
       );
     }
 
-    // Return the generated video URL as a response
     return NextResponse.json({ videoUrl });
   } catch (error) {
     console.error("Error generating or fetching video:", error);

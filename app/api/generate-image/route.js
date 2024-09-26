@@ -3,17 +3,15 @@ import Replicate from "replicate";
 import { createClient } from "@/utils/supabase/server";
 
 const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN, // Ensure this is set in your environment variables
+  auth: process.env.REPLICATE_API_TOKEN,
 });
 
 export async function POST(request) {
   try {
     const { prompt, aspect_ratio } = await request.json();
 
-    // Get Supabase client
     const supabase = createClient();
 
-    // Retrieve the authenticated user
     const {
       data: { user },
       error: userError,
@@ -29,9 +27,9 @@ export async function POST(request) {
       );
     }
 
-    const userId = user.id; // Fetch the user's UUID
-    const userEmail = user.email; // Fetch the user's email
-    console.log("Authenticated user ID:", userId); // Debugging output
+    const userId = user.id;
+    const userEmail = user.email;
+    console.log("Authenticated user ID:", userId);
 
     if (!prompt) {
       return NextResponse.json(
@@ -40,7 +38,6 @@ export async function POST(request) {
       );
     }
 
-    // Call the Replicate API to generate the image
     const output = await replicate.run("black-forest-labs/flux-schnell", {
       input: {
         prompt: prompt,
@@ -57,16 +54,14 @@ export async function POST(request) {
 
     const imageUrl = output[0];
 
-    // Fetch the image blob from the generated URL using native fetch
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
       throw new Error("Failed to fetch the image from the generated URL");
     }
 
-    const imageBlob = await imageResponse.blob(); // Convert the response to a Blob
+    const imageBlob = await imageResponse.blob();
 
-    // Upload the image to Supabase Storage
-    const fileName = `generated-${Date.now()}.jpg`; // Create a unique file name
+    const fileName = `generated-${Date.now()}.jpg`;
     const { error: uploadError } = await supabase.storage
       .from("generated-images")
       .upload(fileName, imageBlob, {
@@ -81,7 +76,6 @@ export async function POST(request) {
       );
     }
 
-    // Constructing the public URL correctly
     const { data: publicUrlData } = supabase.storage
       .from("generated-images")
       .getPublicUrl(fileName);
@@ -97,10 +91,8 @@ export async function POST(request) {
       );
     }
 
-    // Deduct credits and insert into the generations table
-    const creditsUsed = 1; // Adjust this value based on your business logic
+    const creditsUsed = 1;
 
-    // Fetch user's credits
     const { data: userData, error: userCreditsError } = await supabase
       .from("users")
       .select("credits")
@@ -121,7 +113,6 @@ export async function POST(request) {
 
     const userCredits = userData[0].credits;
 
-    // Check if the user has enough credits
     if (userCredits < creditsUsed) {
       return NextResponse.json(
         { message: "Not enough credits" },
@@ -129,7 +120,6 @@ export async function POST(request) {
       );
     }
 
-    // Deduct credits from the user's account
     const { error: deductError } = await supabase
       .from("users")
       .update({ credits: userCredits - creditsUsed })
@@ -143,14 +133,13 @@ export async function POST(request) {
       );
     }
 
-    // Insert generation record into the 'generations' table, including user_email
     const { error: insertError } = await supabase.from("generations").insert([
       {
-        user_id: userId, // Use the UUID
-        user_email: userEmail, // Store the user's email
+        user_id: userId,
+        user_email: userEmail,
         type: "image",
-        parameters: { prompt, aspect_ratio }, // Store the parameters as JSON
-        result_path: publicURL, // Save the public URL to result_path
+        parameters: { prompt, aspect_ratio },
+        result_path: publicURL,
         credits_used: creditsUsed,
       },
     ]);

@@ -34,6 +34,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "replicate.delivery",
       },
+      {
+        protocol: "https",
+        hostname: "wdfrtqeljulkoqnllxad.supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.cdn-luma.com",
+      },
     ],
   },
   reactStrictMode: true,
