@@ -13,13 +13,13 @@ export default async function AuthButton() {
   if (!hasEnvVars) {
     return (
       <>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-col gap-4 items-center md:flex-row md:justify-between">
           <div>
             <Badge variant={"default"} className="font-normal pointer-events-none">
               Please update .env.local file with anon key and url
             </Badge>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-2 md:mt-0">
             <Button asChild size="sm" variant={"outline"} disabled className="opacity-75 cursor-none pointer-events-none">
               <Link href="/sign-in">Sign in</Link>
             </Button>
@@ -39,7 +39,7 @@ export default async function AuthButton() {
       .from('users')
       .select('credits')
       .eq('email', user.email)
-      .single(); // Get single user record by email
+      .single(); 
 
     if (creditsError) {
       console.error("Error fetching user credits:", creditsError.message);
@@ -49,17 +49,17 @@ export default async function AuthButton() {
   }
 
   return user ? (
-<div className="flex items-center justify-between w-full ml-4">
-  <span>Hey, {user.email}!</span>
-  <div className="flex items-center gap-4">
-    <span>You have {userCredits} credits.</span> {/* Display credits to the right */}
-    <form action={signOutAction}>
-      <Button type="submit" variant={"outline"}>
-        Sign out
-      </Button>
-    </form>
-  </div>
-</div>
+    <div className="flex flex-col md:flex-row items-center justify-between w-full p-4">
+      <span className="text-sm">Hey, {user.email}!</span>
+      <div className="flex items-center gap-4 mt-2 md:mt-0">
+        <span>You have {userCredits} credits.</span> {/* Display credits to the right */}
+        <form action={signOutAction}>
+          <Button type="submit" variant={"outline"}>
+            Sign out
+          </Button>
+        </form>
+      </div>
+    </div>
   ) : (
     <div className="flex gap-2">
       <Button asChild size="sm" variant={"outline"}>

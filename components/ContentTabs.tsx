@@ -119,7 +119,7 @@ export default function ContentTabs({
                 type="file"
                 onChange={handleFileChange}
                 className="mr-2"
-                accept=".jpg,.jpeg"
+                accept=".jpg,.jpeg,.png"
                 />              
             <Button className="ml-2" onClick={handleUpload} disabled={!imageFile || uploadLoading}>
                 {uploadLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : "Upload"}
