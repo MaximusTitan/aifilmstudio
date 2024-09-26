@@ -159,6 +159,7 @@ export default function ContentGenerator() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             selectedImage={selectedImage}
+            setSelectedImage={setSelectedImage}
             prompt={prompt}
             setPrompt={setPrompt}
             handleImageToVideo={handleImageToVideo}
