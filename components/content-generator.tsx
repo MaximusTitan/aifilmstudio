@@ -1,19 +1,10 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Image, Loader2, Video, Download, RefreshCw } from "lucide-react";
+// ContentGenerator.tsx
+import { useState, useEffect } from "react";
+import ContentTabs from "./ContentTabs";
+import ContentGeneratorForm from "./ContentGeneratorForm";
+import LatestGeneration from "./LatestGeneration";
+import GenerationList from "./GenerationList";
 import axios from "axios";
 
 type Generation = {
@@ -34,6 +25,7 @@ export default function ContentGenerator() {
   const [latestGeneration, setLatestGeneration] = useState<Generation | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  // Fetch past generations when the component mounts
   useEffect(() => {
     const fetchGenerations = async () => {
       try {
@@ -45,7 +37,7 @@ export default function ContentGenerator() {
           prompt: gen.parameters.prompt,
           created_at: gen.created_at,
         }));
-        setGenerations(fetchedGenerations);
+        setGenerations(fetchedGenerations.reverse()); // Ensure newest items are at the top
       } catch (err) {
         console.error("Failed to load past generations", err);
       }
@@ -58,8 +50,6 @@ export default function ContentGenerator() {
     e.preventDefault();
     setLoading(true);
     setError("");
-
-    console.log("Submitting data:", { prompt, aspectRatio }); // Debug statement
 
     try {
       const endpoint = activeTab === "image" ? "/api/generate-image" : "/api/generate-video";
@@ -83,7 +73,7 @@ export default function ContentGenerator() {
       setGenerations((prev) => [newGeneration, ...prev]);
       setLatestGeneration(newGeneration);
     } catch (err) {
-      console.error("Error in handleSubmit:", err); // Debug statement
+      console.error("Error in handleSubmit:", err);
       setError("Failed to generate content. Please try again.");
     } finally {
       setLoading(false);
@@ -96,7 +86,6 @@ export default function ContentGenerator() {
 
   const handleImageToVideo = async () => {
     if (!selectedImage || !prompt) {
-      console.log("Image or prompt is missing:", { selectedImage, prompt }); // Debug statement
       return;
     }
 
@@ -104,13 +93,12 @@ export default function ContentGenerator() {
     setError("");
 
     try {
-      console.log("Converting image to video with data:", { aspectRatio, prompt, selectedImage }); // Debug statement
       const response = await axios.post("/api/image-to-video", {
         aspect_ratio: aspectRatio,
         prompt: prompt,
         keyframes: {
           frame0: {
-            type: 'image',
+            type: "image",
             url: selectedImage,
           },
         },
@@ -133,7 +121,7 @@ export default function ContentGenerator() {
       setLatestGeneration(newGeneration);
       setSelectedImage(null);
     } catch (err) {
-      console.error("Error in handleImageToVideo:", err); // Debug statement
+      console.error("Error in handleImageToVideo:", err);
       setError("Failed to convert image to video. Please try again.");
     } finally {
       setLoading(false);
@@ -143,12 +131,12 @@ export default function ContentGenerator() {
   const handleRegenerate = () => {
     if (latestGeneration) {
       setPrompt(latestGeneration.prompt);
-      handleSubmit(new Event('submit') as unknown as React.FormEvent);
+      handleSubmit(new Event("submit") as unknown as React.FormEvent);
     }
   };
 
   const handleDownload = (url: string, filename: string) => {
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
@@ -158,182 +146,46 @@ export default function ContentGenerator() {
 
   const updateSelectedImage = (imageUrl: string) => {
     setSelectedImage(imageUrl);
+    setActiveTab("image-to-video");
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 space-y-8">
+    <div className="space-y-4">
+      <h1 className="text-3xl font-semibold">Content Generator</h1>
       <div className="flex gap-8">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-center mb-4">AI Content Generator</h1>
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) => setActiveTab(value as "image" | "video" | "image-to-video")}
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="image">
-                <Image className="mr-2 h-4 w-4" />
-                Image
-              </TabsTrigger>
-              <TabsTrigger value="video">
-                <Video className="mr-2 h-4 w-4" />
-                Video
-              </TabsTrigger>
-              <TabsTrigger value="image-to-video">
-                <Image className="mr-2 h-4 w-4" />
-                to
-                <Video className="ml-2 h-4 w-4" />
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="image-to-video" className="mt-4">
-              <div className="grid w-full max-w-sm items-center gap-1.5">
-                {/* <Label htmlFor="picture">Picture</Label>
-                <Input id="picture" type="file" onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    setSelectedImage(url);
-                    console.log("Selected image URL:", url); // Debug statement
-                  }
-                }} /> */}
-              </div>
-              <div>
-                {activeTab === "image-to-video" && selectedImage && (
-                  <div>
-                    <Label htmlFor="selected-image">Selected Image</Label>
-                    <img src={selectedImage} alt="Selected" className="w-1/4 h-auto rounded-lg shadow-lg mt-2" />
-                  </div>
-                )}
-                <Label htmlFor="image-prompt">Prompt</Label>
-                <Textarea
-                  id="image-prompt"
-                  placeholder="Describe the video you want to generate from the image..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  required
-                />
-              </div>
-              <Button className="mt-4" onClick={handleImageToVideo} disabled={loading || !selectedImage || !prompt}>
-                {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : "Generate Video"}
-              </Button>
-            </TabsContent>
-          </Tabs>
-          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            {(activeTab === "image" || activeTab === "video") && (
-              <>
-                <div>
-                  <Label htmlFor="prompt">Prompt</Label>
-                  <Textarea
-                    id="prompt"
-                    placeholder="Describe the image or video you want to generate..."
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
-                  <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                    <SelectTrigger id="aspect-ratio">
-                      <SelectValue placeholder="Select aspect ratio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                  <SelectItem value="4:3">4:3 (Standard)</SelectItem>
-                  <SelectItem value="16:9">16:9 (Widescreen)</SelectItem>
-                  <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
-                  <SelectItem value="3:4">3:4 (Vertical)</SelectItem>
-                  <SelectItem value="21:9">21:9 (Ultra-Widescreen)</SelectItem>
-                  <SelectItem value="9:21">9:21 (Ultra-Portrait)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button type="submit" disabled={loading}>
-              {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : "Generate"}
-            </Button>
-              </>
-            )}
-            {error && <div className="text-red-500">{error}</div>}
-          </form>
-          </div>
-          {latestGeneration && (
-            <div className="flex-1">
-              <h2 className="text-2xl font-semibold">Latest Generation</h2>
-              <div className="mt-2">
-                {latestGeneration.type === "image" && (
-                  <img src={latestGeneration.url} alt="Generated" className="rounded-lg shadow-lg" />
-                )}
-                {latestGeneration.type === "video" && (
-                  <video controls className="rounded-lg shadow-lg">
-                    <source src={latestGeneration.url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                )}
-                {latestGeneration.type === "image-to-video" && (
-                  <video controls className="rounded-lg shadow-lg">
-                    <source src={latestGeneration.url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                )}
-              </div>
-              <div className="mt-2">
-                <Button
-                  onClick={() => handleDownload(latestGeneration.url, `${latestGeneration.type}-${latestGeneration.id}`)}
-                  className="mr-2"
-                  variant={"outline"}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-                <Button onClick={handleRegenerate} variant={"outline"}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Regenerate
-                </Button>
-              </div>
-            </div>
-          )}
+          <ContentTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            selectedImage={selectedImage}
+            prompt={prompt}
+            setPrompt={setPrompt}
+            handleImageToVideo={handleImageToVideo}
+            loading={loading}
+          />
+          <ContentGeneratorForm
+            activeTab={activeTab}
+            prompt={prompt}
+            setPrompt={setPrompt}
+            aspectRatio={aspectRatio}
+            setAspectRatio={setAspectRatio}
+            loading={loading}
+            handleSubmit={handleSubmit}
+          />
         </div>
-        <div>
-          <h2 className="text-2xl font-semibold">Previous Generations</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {generations
-              .slice() // Creates a copy of the array
-              .reverse() // Reverses the array to display latest first
-              .map((gen) => (
-                <div key={gen.id} className="border rounded-lg p-4 shadow-md">
-                  {gen.type === "image" && (
-                    <img src={gen.url} alt="Generated" className="rounded-lg shadow-lg" />
-                  )}
-                  {gen.type === "video" && (
-                    <video controls className="rounded-lg shadow-lg">
-                      <source src={gen.url} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  )}
-                  {gen.type === "image-to-video" && (
-                    <video controls className="rounded-lg shadow-lg">
-                      <source src={gen.url} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  )}
-                  <div className="mt-2">
-                    <Button variant={"outline"} onClick={() => updateSelectedImage(gen.url)}>Select Image</Button>
-                    <Button
-                      onClick={() => handleDownload(gen.url, `${gen.type}-${gen.id}`)}
-                      className="ml-2"
-                      variant={"outline"}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">{gen.prompt}</p>
-                  <p className="mt-2 text-sm text-gray-400">
-                    {new Date(gen.created_at ?? "").toLocaleString()}
-                  </p>
-                </div>
-              ))}
-          </div>
-        </div>
-
+        {latestGeneration && (
+          <LatestGeneration
+            latestGeneration={latestGeneration}
+            handleDownload={handleDownload}
+            handleRegenerate={handleRegenerate}
+          />
+        )}
       </div>
+      <GenerationList
+        generations={generations}
+        updateSelectedImage={updateSelectedImage}
+        handleDownload={handleDownload}
+      />
+    </div>
   );
 }
