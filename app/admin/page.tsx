@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter for redirection
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
@@ -28,6 +29,7 @@ interface Generation {
 
 export default function AdminUsersPage() {
   const supabase = createClient();
+  const router = useRouter(); // Initialize useRouter
   const [users, setUsers] = useState<User[]>([]);
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [activeTab, setActiveTab] = useState<"users" | "generations">("users");
@@ -35,6 +37,19 @@ export default function AdminUsersPage() {
   const [creditInputs, setCreditInputs] = useState<{ [key: string]: number }>(
     {}
   );
+
+  useEffect(() => {
+    const checkUserAuthentication = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/sign-in"); // Redirect to sign-in if user is not authenticated
+      }
+    };
+
+    checkUserAuthentication();
+  }, [supabase, router]); // Run on component mount
 
   useEffect(() => {
     const fetchUsers = async () => {

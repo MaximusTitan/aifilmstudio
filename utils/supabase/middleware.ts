@@ -1,6 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+const allowedEmails = [
+  "yohan@igebra.ai",
+  "chirans@gmail.com",
+  // Add more emails as needed
+];
+
 export const updateSession = async (request: NextRequest) => {
   try {
     let response = NextResponse.next({
@@ -42,6 +48,13 @@ export const updateSession = async (request: NextRequest) => {
     }
 
     if (user) {
+      // Check if user is allowed to access the /admin route
+      if (request.nextUrl.pathname.startsWith("/admin")) {
+        if (user.email && !allowedEmails.includes(user.email)) {
+          return NextResponse.redirect(new URL("/", request.url)); // Redirect to home for unauthorized users
+        }
+      }
+
       const { data: userData, error: verificationError } = await supabase
         .from("users")
         .select("verified")
@@ -62,6 +75,7 @@ export const updateSession = async (request: NextRequest) => {
           return NextResponse.redirect(new URL("/not-verified", request.url));
         }
       }
+
     }
 
     return response;
