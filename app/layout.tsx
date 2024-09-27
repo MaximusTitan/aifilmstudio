@@ -7,15 +7,17 @@ import { GeistSans } from "geist/font/sans";
 import { ThemeProvider } from "next-themes";
 import Link from "next/link";
 import "./globals.css";
+import Image from "next/image";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "https://genx-zeta.vercel.app";
+  : "https://www.aifilmstudio.co";
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "GoCreate",
-  description: "Generate Images and Videos with AI in seconds using GoCreate",
+  title: "AI Film Studio",
+  description:
+    "Generate Images and Videos with AI in seconds using AI Film Studio",
 };
 
 export default function RootLayout({
@@ -36,7 +38,14 @@ export default function RootLayout({
             <nav className="top-0 left-0 w-full flex justify-center border-b border-b-foreground/10 h-16 bg-background z-50">
               <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
                 <div className="flex gap-5 items-center font-semibold">
-                  <Link href={"/"} className="text-2xl">GoCreate</Link>
+                  <Link href={"/"} className="text-2xl">
+                    <Image
+                      src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/ai-film-studio.png"
+                      alt="AI Film Studio"
+                      width={100}
+                      height={100}
+                    />
+                  </Link>
                 </div>
                 {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
               </div>
