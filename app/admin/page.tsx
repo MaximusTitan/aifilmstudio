@@ -217,6 +217,7 @@ export default function AdminUsersPage() {
               <th className="border p-2">User Email</th>
               <th className="border p-2">Data</th>
               <th className="border p-2">Created At</th>
+              <th className="border p-2">Generations</th>
             </tr>
           </thead>
           <tbody>
@@ -232,14 +233,14 @@ export default function AdminUsersPage() {
                   <td className="border p-2">
                     {new Date(gen.created_at).toLocaleString()}
                   </td>
-                  <td className="border p-2">
+                  <td className="border p-2 min-w-[100px] text-center">
                     <a
                       href={gen.result_path.toString()}
                       className="relative inline-block"
                     >
                       {gen.result_path.toString().match(/\.(mp4|webm)$/) ? (
-                        <div className="relative">
-                          <video width={100} height={100}>
+                        <div className="relative flex items-center justify-center">
+                          <video className="max-w-full h-auto min-w-[100px] min-h-[80px]">
                             <source
                               src={gen.result_path.toString()}
                               type="video/mp4"
@@ -247,16 +248,17 @@ export default function AdminUsersPage() {
                             Your browser does not support the video tag.
                           </video>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <Play className="w-6 h-6 text-white" />{" "}
+                            <Play className="w-6 h-6 text-white" />
                           </div>
                         </div>
                       ) : (
-                        <Image
-                          src={gen.result_path.toString()}
-                          width={100}
-                          height={100}
-                          alt={""}
-                        />
+                        <div className="flex items-center justify-center">
+                          <img
+                            src={gen.result_path.toString()}
+                            className="max-w-full h-auto min-w-[100px] min-h-[80px]"
+                            alt=""
+                          />
+                        </div>
                       )}
                     </a>
                   </td>

@@ -14,40 +14,40 @@ export default async function AuthButton() {
 
   if (!hasEnvVars) {
     return (
-      <>
-        <div className="flex flex-col gap-4 items-center md:flex-row md:justify-between">
-          <div>
-            <Badge
-              variant={"default"}
-              className="font-normal pointer-events-none"
-            >
-              Please update .env.local file with anon key and url
-            </Badge>
-          </div>
-          <div className="flex gap-2 mt-2 md:mt-0">
-            <Button
-              asChild
-              size="sm"
-              variant={"outline"}
-              disabled
-              className="opacity-75 cursor-none pointer-events-none"
-            >
-              <Link href="/sign-in">Sign in</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant={"default"}
-              disabled
-              className="opacity-75 cursor-none pointer-events-none"
-            >
-              <Link href="/sign-up">Sign up</Link>
-            </Button>
-          </div>
+      <div className="flex flex-col gap-4 items-center md:flex-row md:justify-between">
+        <div>
+          <Badge
+            variant={"default"}
+            className="font-normal pointer-events-none"
+          >
+            Please update .env.local file with anon key and url
+          </Badge>
         </div>
-      </>
+        <div className="flex gap-2 mt-2 md:mt-0">
+          <Button
+            asChild
+            size="sm"
+            variant={"outline"}
+            disabled
+            className="opacity-75 cursor-none pointer-events-none"
+          >
+            <Link href="/sign-in">Sign in</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={"default"}
+            disabled
+            className="opacity-75 cursor-none pointer-events-none"
+          >
+            <Link href="/sign-up">Sign up</Link>
+          </Button>
+        </div>
+      </div>
     );
   }
+
+  const adminEmails = ["yohan@igebra.ai", "chirans@gmail.com"]; // Array of admin emails
 
   let userCredits = 0;
   if (user) {
@@ -69,6 +69,13 @@ export default async function AuthButton() {
       <span className="text-sm">Hey, {user.email}!</span>
       <div className="flex items-center gap-4 mt-2 md:mt-0">
         <span>You have {userCredits} credits.</span>
+
+        {user.email && adminEmails.includes(user.email) && (
+          <Link href="/admin">
+            <Button variant="outline">Admin</Button>
+          </Link>
+        )}
+
         <form action={signOutAction}>
           <Button type="submit" variant={"outline"}>
             Sign out
