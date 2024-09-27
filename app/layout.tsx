@@ -64,7 +64,7 @@ export default function RootLayout({
                     className="font-bold hover:underline"
                     rel="noreferrer"
                   >
-                    iGebra.ai
+                    {"{igebra.ai}"}
                   </a>
                 </p>
                 <ThemeSwitcher />
