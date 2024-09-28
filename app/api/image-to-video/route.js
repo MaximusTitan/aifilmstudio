@@ -97,7 +97,7 @@ export async function POST(request) {
 
     const { data: userData, error: userCreditsError } = await supabase
       .from("users")
-      .select("credits")
+      .select("video_credits")
       .eq("id", userId)
       .single();
 
@@ -111,23 +111,23 @@ export async function POST(request) {
       );
     }
 
-    const userCredits = userData.credits;
+    const userVideoCredits = userData.video_credits;
 
-    if (userCredits < creditsUsed) {
+    if (userVideoCredits < creditsUsed) {
       return NextResponse.json(
-        { message: "Not enough credits" },
+        { message: "Not enough video credits" },
         { status: 403 }
       );
     }
 
     const { error: deductError } = await supabase
       .from("users")
-      .update({ credits: userCredits - creditsUsed })
+      .update({ video_credits: userVideoCredits - creditsUsed })
       .eq("id", userId);
 
     if (deductError) {
       return NextResponse.json(
-        { message: "Error updating credits", error: deductError.message },
+        { message: "Error updating video credits", error: deductError.message },
         { status: 500 }
       );
     }

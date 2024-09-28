@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
+import { Image, Video } from "lucide-react";
 
 export default async function AuthButton() {
   const supabase = createClient();
@@ -49,18 +50,20 @@ export default async function AuthButton() {
 
   const adminEmails = ["yohan@igebra.ai", "chirans@gmail.com"]; // Array of admin emails
 
-  let userCredits = 0;
+  let userImageCredits = 0;
+  let userVideoCredits = 0;
   if (user) {
     const { data, error: creditsError } = await supabase
       .from("users")
-      .select("credits")
+      .select("image_credits, video_credits")
       .eq("email", user.email)
       .single();
 
     if (creditsError) {
       console.error("Error fetching user credits:", creditsError.message);
     } else if (data) {
-      userCredits = data.credits;
+      userImageCredits = data.image_credits;
+      userVideoCredits = data.video_credits;
     }
   }
 
@@ -68,7 +71,14 @@ export default async function AuthButton() {
     <div className="flex flex-col md:flex-row items-center justify-between w-full p-4">
       <span className="text-sm">Hey, {user.email}!</span>
       <div className="flex items-center gap-4 mt-2 md:mt-0">
-        <span>You have {userCredits} credits.</span>
+        <span className="flex items-center mr-4">
+          <Image className="mr-2 h-4 w-4" />
+          Credits: {userImageCredits}
+        </span>
+        <span className="flex items-center">
+          <Video className="mr-2 h-4 w-4" />
+          Credits: {userVideoCredits}
+        </span>
 
         {user.email && adminEmails.includes(user.email) && (
           <Link href="/admin">

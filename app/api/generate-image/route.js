@@ -95,7 +95,7 @@ export async function POST(request) {
 
     const { data: userData, error: userCreditsError } = await supabase
       .from("users")
-      .select("credits")
+      .select("image_credits")
       .eq("id", userId)
       .limit(1);
 
@@ -111,24 +111,24 @@ export async function POST(request) {
       );
     }
 
-    const userCredits = userData[0].credits;
+    const userImageCredits = userData[0].image_credits;
 
-    if (userCredits < creditsUsed) {
+    if (userImageCredits < creditsUsed) {
       return NextResponse.json(
-        { message: "Not enough credits" },
+        { message: "Not enough image credits" },
         { status: 403 }
       );
     }
 
     const { error: deductError } = await supabase
       .from("users")
-      .update({ credits: userCredits - creditsUsed })
+      .update({ image_credits: userImageCredits - creditsUsed })
       .eq("id", userId);
 
     if (deductError) {
-      console.error("Deduct credits error:", deductError.message);
+      console.error("Deduct image credits error:", deductError.message);
       return NextResponse.json(
-        { message: "Error updating credits", error: deductError.message },
+        { message: "Error updating image credits", error: deductError.message },
         { status: 500 }
       );
     }

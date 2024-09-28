@@ -15,16 +15,19 @@ export const signUpAction = async (formData: FormData) => {
     return { error: "Email and password are required" };
   }
 
-  let credits: number | null = 30;
+  // Set default credits for image and video
+  let imageCredits = 15;
+  let videoCredits = 15;
 
+  // Check domain for special credits
   const allowedDomains = ["igebra.ai", "prosoftpeople.com"];
   const emailDomain = email.split("@")[1];
 
   if (allowedDomains.includes(emailDomain)) {
-    credits = 999;
+    imageCredits = 499;
+    videoCredits = 500;
   }
 
-  // Create user in Supabase Auth
   const { data: authData, error: signupError } = await supabase.auth.signUp({
     email,
     password,
@@ -38,17 +41,16 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect("error", "/sign-up", signupError.message);
   }
 
-  // Get the user ID from Supabase Auth
   const userId = authData.user?.id;
 
   if (!userId) {
     return encodedRedirect("error", "/sign-up", "Unable to retrieve user ID");
   }
 
-  // Insert the user into the 'users' table with the correct ID
+  // Insert the user with image and video credits
   const { error: insertError } = await supabase
     .from("users")
-    .insert([{ id: userId, email, credits }]);
+    .insert([{ id: userId, email, image_credits: imageCredits, video_credits: videoCredits }]);
 
   if (insertError) {
     console.error(insertError.message);
@@ -120,7 +122,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   const confirmPassword = formData.get("confirmPassword") as string;
 
   if (!password || !confirmPassword) {
-    encodedRedirect(
+    return encodedRedirect(
       "error",
       "/dashboard/reset-password",
       "Password and confirm password are required",
@@ -128,7 +130,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   }
 
   if (password !== confirmPassword) {
-    encodedRedirect(
+    return encodedRedirect(
       "error",
       "/dashboard/reset-password",
       "Passwords do not match",
@@ -140,14 +142,14 @@ export const resetPasswordAction = async (formData: FormData) => {
   });
 
   if (error) {
-    encodedRedirect(
+    return encodedRedirect(
       "error",
       "/dashboard/reset-password",
       "Password update failed",
     );
   }
 
-  encodedRedirect("success", "/dashboard/reset-password", "Password updated");
+  return encodedRedirect("success", "/dashboard/reset-password", "Password updated");
 };
 
 export const signOutAction = async () => {

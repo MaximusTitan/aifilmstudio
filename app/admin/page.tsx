@@ -12,7 +12,8 @@ interface User {
   id: string;
   email: string;
   verified: boolean;
-  credits: number;
+  image_credits: number; // Updated to use image_credits
+  video_credits: number; // Updated to use video_credits
   created_at: string;
 }
 
@@ -34,9 +35,9 @@ export default function AdminUsersPage() {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [activeTab, setActiveTab] = useState<"users" | "generations">("users");
 
-  const [creditInputs, setCreditInputs] = useState<{ [key: string]: number }>(
-    {}
-  );
+  const [creditInputs, setCreditInputs] = useState<{
+    [key: string]: { image_credits: number; video_credits: number };
+  }>({});
 
   useEffect(() => {
     const checkUserAuthentication = async () => {
@@ -66,10 +67,15 @@ export default function AdminUsersPage() {
         const initialCredits =
           sortedUsers.reduce(
             (acc, user) => {
-              acc[user.id] = user.credits;
+              acc[user.id] = {
+                image_credits: user.image_credits,
+                video_credits: user.video_credits,
+              };
               return acc;
             },
-            {} as { [key: string]: number }
+            {} as {
+              [key: string]: { image_credits: number; video_credits: number };
+            }
           ) || {};
         setCreditInputs(initialCredits);
       }
@@ -109,18 +115,24 @@ export default function AdminUsersPage() {
     }
   };
 
-  const updateCredits = async (userId: string, amount: number) => {
+  const updateCredits = async (
+    userId: string,
+    creditType: "image_credits" | "video_credits",
+    amount: number
+  ) => {
+    const updateData = { [creditType]: amount };
+
     const { error } = await supabase
       .from("users")
-      .update({ credits: amount })
+      .update(updateData)
       .eq("id", userId);
 
     if (error) {
-      console.error("Error updating user credits:", error);
+      console.error(`Error updating user ${creditType}:`, error);
     } else {
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
-          user.id === userId ? { ...user, credits: amount } : user
+          user.id === userId ? { ...user, [creditType]: amount } : user
         )
       );
     }
@@ -136,9 +148,16 @@ export default function AdminUsersPage() {
     };
   };
 
-  const handleCreditChange = debounce((userId: string, newCredits: number) => {
-    updateCredits(userId, newCredits);
-  }, 300);
+  const handleCreditChange = debounce(
+    (
+      userId: string,
+      creditType: "image_credits" | "video_credits",
+      newCredits: number
+    ) => {
+      updateCredits(userId, creditType, newCredits);
+    },
+    300
+  );
 
   return (
     <div className="p-4">
@@ -160,54 +179,93 @@ export default function AdminUsersPage() {
       </div>
 
       {activeTab === "users" && (
-        <table className="min-w-full border">
-          <thead>
-            <tr>
-              <th className="border p-2">Email</th>
-              <th className="border p-2">Verified</th>
-              <th className="border p-2">Credits</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td className="border p-2">{user.email}</td>
-                <td className="border p-2">
-                  <Badge variant={user.verified ? "default" : "secondary"}>
-                    {user.verified ? "Verified" : "Not Verified"}
-                  </Badge>
-                </td>
-                <td className="border p-2 flex items-center justify-center">
-                  <input
-                    type="number"
-                    value={creditInputs[user.id] || 0}
-                    onChange={(e) => {
-                      const newCredits = parseInt(e.target.value, 10);
-                      if (!isNaN(newCredits) && newCredits >= 0) {
-                        setCreditInputs((prev) => ({
-                          ...prev,
-                          [user.id]: newCredits,
-                        }));
-                        handleCreditChange(user.id, newCredits);
-                      }
-                    }}
-                    className="w-20 text-center border rounded"
-                    min="0"
-                  />
-                </td>
-                <td className="border p-2">
-                  <Button
-                    onClick={() => toggleVerified(user.id, user.verified)}
-                    variant={"outline"}
-                  >
-                    {user.verified ? "Unverify" : "Verify"}
-                  </Button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border">
+            <thead>
+              <tr>
+                <th className="border p-2">Email</th>
+                <th className="border p-2">Verified</th>
+                <th className="border p-2">Image Credits</th>
+                <th className="border p-2">Video Credits</th>
+                <th className="border p-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td className="border p-2">{user.email}</td>
+                  <td className="border p-2 text-center">
+                    <Badge variant={user.verified ? "default" : "secondary"}>
+                      {user.verified ? "Verified" : "Not Verified"}
+                    </Badge>
+                  </td>
+                  <td className="border p-2">
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="number"
+                        value={creditInputs[user.id]?.image_credits || 0}
+                        onChange={(e) => {
+                          const newCredits = parseInt(e.target.value, 10);
+                          if (!isNaN(newCredits) && newCredits >= 0) {
+                            setCreditInputs((prev) => ({
+                              ...prev,
+                              [user.id]: {
+                                ...prev[user.id],
+                                image_credits: newCredits,
+                              },
+                            }));
+                            handleCreditChange(
+                              user.id,
+                              "image_credits",
+                              newCredits
+                            );
+                          }
+                        }}
+                        className="w-20 text-center border rounded"
+                        min="0"
+                      />
+                    </div>
+                  </td>
+                  <td className="border p-2">
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="number"
+                        value={creditInputs[user.id]?.video_credits || 0}
+                        onChange={(e) => {
+                          const newCredits = parseInt(e.target.value, 10);
+                          if (!isNaN(newCredits) && newCredits >= 0) {
+                            setCreditInputs((prev) => ({
+                              ...prev,
+                              [user.id]: {
+                                ...prev[user.id],
+                                video_credits: newCredits,
+                              },
+                            }));
+                            handleCreditChange(
+                              user.id,
+                              "video_credits",
+                              newCredits
+                            );
+                          }
+                        }}
+                        className="w-20 text-center border rounded"
+                        min="0"
+                      />
+                    </div>
+                  </td>
+                  <td className="border p-2 text-center">
+                    <Button
+                      onClick={() => toggleVerified(user.id, user.verified)}
+                      variant="outline"
+                    >
+                      {user.verified ? "Unverify" : "Verify"}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {activeTab === "generations" && (
@@ -217,7 +275,7 @@ export default function AdminUsersPage() {
               <th className="border p-2">User Email</th>
               <th className="border p-2">Data</th>
               <th className="border p-2">Created At</th>
-              <th className="border p-2">Generations</th>
+              <th className="border p-2">Result</th>
             </tr>
           </thead>
           <tbody>
@@ -225,7 +283,7 @@ export default function AdminUsersPage() {
               return (
                 <tr key={gen.id}>
                   <td className="border p-2">
-                    {gen ? gen.user_email : "Unknown"}
+                    {gen.user_email ? gen.user_email : "Unknown"}
                   </td>
                   <td className="border p-2">
                     {JSON.stringify(gen.parameters.prompt)}
