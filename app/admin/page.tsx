@@ -2,18 +2,38 @@
 
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter for redirection
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
-import { Play } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  PlusCircle,
+  Image as ImageIcon,
+  Video,
+  Play,
+  AlertCircle,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface User {
   id: string;
   email: string;
   verified: boolean;
-  image_credits: number; // Updated to use image_credits
-  video_credits: number; // Updated to use video_credits
+  image_credits: number;
+  video_credits: number;
   created_at: string;
 }
 
@@ -26,11 +46,14 @@ interface Generation {
   created_at: string;
   user_email: string;
   result_path: URL;
+  user_id: string;
+  credits_used: number;
+  type: "image" | "video";
 }
 
 export default function AdminUsersPage() {
   const supabase = createClient();
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [activeTab, setActiveTab] = useState<"users" | "generations">("users");
@@ -39,18 +62,27 @@ export default function AdminUsersPage() {
     [key: string]: { image_credits: number; video_credits: number };
   }>({});
 
+  const [userConsumedCredits, setUserConsumedCredits] = useState<{
+    [key: string]: { image_credits_used: number; video_credits_used: number };
+  }>({});
+
+  const [expandedGenId, setExpandedGenId] = useState<string | null>(null);
+  const toggleExpand = (id: string | null) => {
+    setExpandedGenId(id);
+  };
+
   useEffect(() => {
     const checkUserAuthentication = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/sign-in"); // Redirect to sign-in if user is not authenticated
+        router.push("/sign-in");
       }
     };
 
     checkUserAuthentication();
-  }, [supabase, router]); // Run on component mount
+  }, [supabase, router]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -64,19 +96,18 @@ export default function AdminUsersPage() {
         );
         setUsers(sortedUsers);
 
-        const initialCredits =
-          sortedUsers.reduce(
-            (acc, user) => {
-              acc[user.id] = {
-                image_credits: user.image_credits,
-                video_credits: user.video_credits,
-              };
-              return acc;
-            },
-            {} as {
-              [key: string]: { image_credits: number; video_credits: number };
-            }
-          ) || {};
+        const initialCredits = sortedUsers.reduce(
+          (acc, user) => {
+            acc[user.id] = {
+              image_credits: 0,
+              video_credits: 0,
+            };
+            return acc;
+          },
+          {} as {
+            [key: string]: { image_credits: number; video_credits: number };
+          }
+        );
         setCreditInputs(initialCredits);
       }
     };
@@ -91,6 +122,29 @@ export default function AdminUsersPage() {
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         setGenerations(sortedGenerations);
+
+        const consumedCredits = sortedGenerations.reduce(
+          (acc, gen) => {
+            const userId = gen.user_id;
+            if (!acc[userId]) {
+              acc[userId] = { image_credits_used: 0, video_credits_used: 0 };
+            }
+            if (gen.type === "image") {
+              acc[userId].image_credits_used += gen.credits_used;
+            } else if (gen.type === "video") {
+              acc[userId].video_credits_used += gen.credits_used;
+            }
+            return acc;
+          },
+          {} as {
+            [key: string]: {
+              image_credits_used: number;
+              video_credits_used: number;
+            };
+          }
+        );
+
+        setUserConsumedCredits(consumedCredits);
       }
     };
 
@@ -120,7 +174,10 @@ export default function AdminUsersPage() {
     creditType: "image_credits" | "video_credits",
     amount: number
   ) => {
-    const updateData = { [creditType]: amount };
+    const updateData = {
+      [creditType]:
+        (users.find((user) => user.id === userId)?.[creditType] || 0) + amount,
+    };
 
     const { error } = await supabase
       .from("users")
@@ -132,32 +189,13 @@ export default function AdminUsersPage() {
     } else {
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
-          user.id === userId ? { ...user, [creditType]: amount } : user
+          user.id === userId
+            ? { ...user, [creditType]: updateData[creditType] }
+            : user
         )
       );
     }
   };
-
-  const debounce = (func: Function, delay: number) => {
-    let timeoutId: NodeJS.Timeout;
-    return (...args: any) => {
-      if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        func(...args);
-      }, delay);
-    };
-  };
-
-  const handleCreditChange = debounce(
-    (
-      userId: string,
-      creditType: "image_credits" | "video_credits",
-      newCredits: number
-    ) => {
-      updateCredits(userId, creditType, newCredits);
-    },
-    300
-  );
 
   return (
     <div className="p-4">
@@ -178,35 +216,68 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-      {activeTab === "users" && (
+      {activeTab === "users" && users.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="min-w-full border">
-            <thead>
-              <tr>
-                <th className="border p-2">Email</th>
-                <th className="border p-2">Verified</th>
-                <th className="border p-2">Image Credits</th>
-                <th className="border p-2">Video Credits</th>
-                <th className="border p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="min-w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <TableHead className="min-w-[150px]">
+                        Image Credits <AlertCircle className="inline h-4 w-4" />
+                      </TableHead>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Available / Consumed</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TableHead></TableHead>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <TableHead className="min-w-[150px]">
+                        Video Credits <AlertCircle className="inline h-4 w-4" />
+                      </TableHead>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Available / Consumed</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TableHead className="min-w-[50px]"></TableHead>
+                <TableHead className="min-w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="border p-2">{user.email}</td>
-                  <td className="border p-2 text-center">
-                    <Badge variant={user.verified ? "default" : "secondary"}>
-                      {user.verified ? "Verified" : "Not Verified"}
+                <TableRow key={user.id}>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={user.verified ? "outline" : "destructive"}>
+                      {user.verified ? "Verified" : "Unverified"}
                     </Badge>
-                  </td>
-                  <td className="border p-2">
-                    <div className="flex items-center justify-center">
-                      <input
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-green-500">{user.image_credits}</span>
+                    {" / "}
+                    <span className="text-red-500">
+                      {userConsumedCredits[user.id]?.image_credits_used || 0}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Input
                         type="number"
+                        placeholder="Amount"
+                        className="w-16"
                         value={creditInputs[user.id]?.image_credits || 0}
                         onChange={(e) => {
                           const newCredits = parseInt(e.target.value, 10);
-                          if (!isNaN(newCredits) && newCredits >= 0) {
+                          if (!isNaN(newCredits)) {
                             setCreditInputs((prev) => ({
                               ...prev,
                               [user.id]: {
@@ -214,26 +285,41 @@ export default function AdminUsersPage() {
                                 image_credits: newCredits,
                               },
                             }));
-                            handleCreditChange(
-                              user.id,
-                              "image_credits",
-                              newCredits
-                            );
                           }
                         }}
-                        className="w-20 text-center border rounded"
-                        min="0"
                       />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          updateCredits(
+                            user.id,
+                            "image_credits",
+                            creditInputs[user.id]?.image_credits || 0
+                          )
+                        }
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                      </Button>
                     </div>
-                  </td>
-                  <td className="border p-2">
-                    <div className="flex items-center justify-center">
-                      <input
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-green-500">{user.video_credits}</span>
+                    {" / "}
+                    <span className="text-red-500">
+                      {userConsumedCredits[user.id]?.video_credits_used || 0}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Input
                         type="number"
+                        placeholder="Amount"
+                        className="w-20"
                         value={creditInputs[user.id]?.video_credits || 0}
                         onChange={(e) => {
                           const newCredits = parseInt(e.target.value, 10);
-                          if (!isNaN(newCredits) && newCredits >= 0) {
+                          if (!isNaN(newCredits)) {
                             setCreditInputs((prev) => ({
                               ...prev,
                               [user.id]: {
@@ -241,57 +327,92 @@ export default function AdminUsersPage() {
                                 video_credits: newCredits,
                               },
                             }));
-                            handleCreditChange(
-                              user.id,
-                              "video_credits",
-                              newCredits
-                            );
                           }
                         }}
-                        className="w-20 text-center border rounded"
-                        min="0"
                       />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          updateCredits(
+                            user.id,
+                            "video_credits",
+                            creditInputs[user.id]?.video_credits || 0
+                          )
+                        }
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                      </Button>
                     </div>
-                  </td>
-                  <td className="border p-2 text-center">
+                  </TableCell>
+                  <TableCell>
                     <Button
                       onClick={() => toggleVerified(user.id, user.verified)}
-                      variant="outline"
                     >
                       {user.verified ? "Unverify" : "Verify"}
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 
-      {activeTab === "generations" && (
-        <table className="min-w-full border">
-          <thead>
-            <tr>
-              <th className="border p-2">User Email</th>
-              <th className="border p-2">Data</th>
-              <th className="border p-2">Created At</th>
-              <th className="border p-2">Result</th>
-            </tr>
-          </thead>
-          <tbody>
-            {generations.map((gen) => {
-              return (
-                <tr key={gen.id}>
-                  <td className="border p-2">
-                    {gen.user_email ? gen.user_email : "Unknown"}
-                  </td>
-                  <td className="border p-2">
-                    {JSON.stringify(gen.parameters.prompt)}
-                  </td>
-                  <td className="border p-2">
-                    {new Date(gen.created_at).toLocaleString()}
-                  </td>
-                  <td className="border p-2 min-w-[100px] text-center">
+      {activeTab === "generations" && generations.length > 0 && (
+        <div className="overflow-x-auto">
+          <Table className="min-w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Email</TableHead>
+                <TableHead>Prompt</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Result</TableHead>
+                <TableHead>Created At</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {generations.map((gen) => (
+                <TableRow key={gen.id}>
+                  <TableCell>{gen.user_email}</TableCell>
+                  <TableCell>
+                    {gen.parameters.prompt.length > 150 ? (
+                      <span className="inline-table">
+                        {expandedGenId === gen.id ? (
+                          <>
+                            {gen.parameters.prompt}
+                            <Button
+                              onClick={() => toggleExpand(null)}
+                              variant="link"
+                            >
+                              less
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            {gen.parameters.prompt.slice(0, 150)}...
+                            <Button
+                              onClick={() => toggleExpand(gen.id)}
+                              variant="link"
+                            >
+                              more
+                            </Button>
+                          </>
+                        )}
+                      </span>
+                    ) : (
+                      gen.parameters.prompt
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    {gen.type === "image" ? (
+                      <ImageIcon className="w-4 h-4" />
+                    ) : (
+                      <Video className="w-4 h-4" />
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <a
                       href={gen.result_path.toString()}
                       className="relative inline-block"
@@ -319,12 +440,15 @@ export default function AdminUsersPage() {
                         </div>
                       )}
                     </a>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(gen.created_at).toLocaleString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

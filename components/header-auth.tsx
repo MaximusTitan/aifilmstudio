@@ -48,7 +48,7 @@ export default async function AuthButton() {
     );
   }
 
-  const adminEmails = ["yohan@igebra.ai", "chirans@gmail.com"]; // Array of admin emails
+  const adminEmails = ["yohan@igebra.ai", "chirans@gmail.com"];
 
   let userImageCredits = 0;
   let userVideoCredits = 0;
