@@ -23,7 +23,6 @@ export default function AdminSettings() {
 
   useEffect(() => {
     const fetchCurrentProvider = async () => {
-      // Check if session exists before fetching
       if (!session) {
         console.error("User not authenticated");
         return;
