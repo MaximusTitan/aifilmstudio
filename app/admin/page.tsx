@@ -231,7 +231,7 @@ export default function AdminUsersPage() {
                       </TableHead>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Available / Consumed</p>
+                      <p>Available | Consumed</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -244,7 +244,7 @@ export default function AdminUsersPage() {
                       </TableHead>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Available / Consumed</p>
+                      <p>Available | Consumed</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -263,7 +263,7 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell>
                     <span className="text-green-500">{user.image_credits}</span>
-                    {" / "}
+                    {" | "}
                     <span className="text-red-500">
                       {userConsumedCredits[user.id]?.image_credits_used || 0}
                     </span>
@@ -305,7 +305,7 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell>
                     <span className="text-green-500">{user.video_credits}</span>
-                    {" / "}
+                    {" | "}
                     <span className="text-red-500">
                       {userConsumedCredits[user.id]?.video_credits_used || 0}
                     </span>

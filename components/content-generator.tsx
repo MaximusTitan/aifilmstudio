@@ -160,7 +160,7 @@ export default function ContentGenerator() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-4xl">
       <h1 className="text-3xl font-semibold">Content Generator</h1>
       <div className="flex gap-8">
         <div className="flex-1 min-w-96">
