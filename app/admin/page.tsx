@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import AdminSettings from "@/app/admin/AdminSettings";
 
 interface User {
   id: string;
@@ -56,7 +57,9 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [generations, setGenerations] = useState<Generation[]>([]);
-  const [activeTab, setActiveTab] = useState<"users" | "generations">("users");
+  const [activeTab, setActiveTab] = useState<
+    "users" | "generations" | "settings"
+  >("users");
 
   const [creditInputs, setCreditInputs] = useState<{
     [key: string]: { image_credits: number; video_credits: number };
@@ -199,7 +202,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl mb-4">User Management</h1>
+      <h1 className="text-2xl mb-4">Admin Dashboard</h1>
 
       <div className="flex space-x-4 mb-4">
         <Button
@@ -213,6 +216,12 @@ export default function AdminUsersPage() {
           onClick={() => setActiveTab("generations")}
         >
           Generations
+        </Button>
+        <Button
+          variant={activeTab === "settings" ? "secondary" : "outline"}
+          onClick={() => setActiveTab("settings")}
+        >
+          Settings
         </Button>
       </div>
 
@@ -450,6 +459,7 @@ export default function AdminUsersPage() {
           </Table>
         </div>
       )}
+      {activeTab === "settings" && <AdminSettings />}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import ContentGeneratorForm from "./ContentGeneratorForm";
 import LatestGeneration from "./LatestGeneration";
 import GenerationList from "./GenerationList";
 import axios from "axios";
-
+import { getImageProvider } from "@/app/actions";
 type Generation = {
   id: string;
   type: "image" | "video" | "image-to-video";
@@ -21,6 +21,7 @@ export default function ContentGenerator() {
   >("image");
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [imageSize, setImageSize] = useState("landscape_16_9");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [generations, setGenerations] = useState<Generation[]>([]);
@@ -57,12 +58,25 @@ export default function ContentGenerator() {
     setError("");
 
     try {
-      const endpoint =
+      let endpoint =
         activeTab === "image" ? "/api/generate-image" : "/api/generate-video";
-      const response = await axios.post(endpoint, {
-        prompt,
-        aspect_ratio: aspectRatio,
-      });
+
+      const imageProvider = await getImageProvider();
+      let requestBody: any = { prompt, aspect_ratio: aspectRatio };
+
+      if (imageProvider === "fal") {
+        endpoint = "/api/generate-image-fal";
+        requestBody = {
+          prompt,
+          image_size: imageSize,
+          num_inference_steps: 4,
+          num_images: 1,
+        };
+      }
+
+      console.log("Sending request to:", endpoint, "with body:", requestBody);
+
+      const response = await axios.post(endpoint, requestBody);
 
       if (response.status !== 200) {
         throw new Error("Failed to generate content");
@@ -74,7 +88,9 @@ export default function ContentGenerator() {
         url:
           activeTab === "image"
             ? response.data.imageUrl
-            : response.data.videoUrl,
+            : activeTab === "video"
+              ? response.data.videoUrl
+              : response.data.imageUrl,
         prompt: prompt,
         created_at: new Date().toISOString(),
       };
@@ -83,6 +99,9 @@ export default function ContentGenerator() {
       setLatestGeneration(newGeneration);
     } catch (err) {
       console.error("Error in handleSubmit:", err);
+      if (axios.isAxiosError(err) && err.response) {
+        console.error("Server responded with:", err.response.data);
+      }
       setError("Failed to generate content. Please try again.");
     } finally {
       setLoading(false);
@@ -180,6 +199,8 @@ export default function ContentGenerator() {
             setPrompt={setPrompt}
             aspectRatio={aspectRatio}
             setAspectRatio={setAspectRatio}
+            imageSize={imageSize}
+            setImageSize={setImageSize}
             loading={loading}
             handleSubmit={handleSubmit}
           />

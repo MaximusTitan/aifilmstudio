@@ -5,21 +5,35 @@ import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+const supabase = createClient();
+
+export const getImageProvider = async () => {
+  const { data, error } = await supabase
+    .from("settings")
+    .select("value")
+    .eq("key", "image_provider")
+    .single();
+
+  if (error) {
+    console.error("Error fetching image provider:", error);
+    return null;
+  }
+
+  return data?.value;
+};
+
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
-  const supabase = createClient();
   const origin = headers().get("origin");
 
   if (!email || !password) {
     return { error: "Email and password are required" };
   }
 
-  // Set default credits for image and video
   let imageCredits = 15;
   let videoCredits = 15;
 
-  // Check domain for special credits
   const allowedDomains = ["igebra.ai", "prosoftpeople.com"];
   const emailDomain = email.split("@")[1];
 
@@ -47,7 +61,6 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect("error", "/sign-up", "Unable to retrieve user ID");
   }
 
-  // Insert the user with image and video credits
   const { error: insertError } = await supabase
     .from("users")
     .insert([{ id: userId, email, image_credits: imageCredits, video_credits: videoCredits }]);
@@ -67,7 +80,6 @@ export const signUpAction = async (formData: FormData) => {
 export const signInAction = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const supabase = createClient();
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -83,7 +95,6 @@ export const signInAction = async (formData: FormData) => {
 
 export const forgotPasswordAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
-  const supabase = createClient();
   const origin = headers().get("origin");
   const callbackUrl = formData.get("callbackUrl")?.toString();
 
@@ -116,8 +127,6 @@ export const forgotPasswordAction = async (formData: FormData) => {
 };
 
 export const resetPasswordAction = async (formData: FormData) => {
-  const supabase = createClient();
-
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
@@ -153,7 +162,6 @@ export const resetPasswordAction = async (formData: FormData) => {
 };
 
 export const signOutAction = async () => {
-  const supabase = createClient();
   await supabase.auth.signOut();
   return redirect("/sign-in");
 };

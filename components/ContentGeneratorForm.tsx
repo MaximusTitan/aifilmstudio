@@ -1,16 +1,8 @@
-// ContentGeneratorForm.tsx
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { getImageProvider } from "@/app/actions";
+import ImageGeneratorForm from "./ImageGeneratorForm";
+import VideoGeneratorForm from "./VideoGeneratorForm";
+import GenerateImageFal from "./GenerateImageFal";
 
 type ContentGeneratorFormProps = {
   activeTab: "image" | "video" | "image-to-video";
@@ -18,6 +10,8 @@ type ContentGeneratorFormProps = {
   setPrompt: (prompt: string) => void;
   aspectRatio: string;
   setAspectRatio: (aspectRatio: string) => void;
+  imageSize: string;
+  setImageSize: (aspectRatio: string) => void;
   loading: boolean;
   handleSubmit: (e: React.FormEvent) => void;
 };
@@ -28,47 +22,67 @@ export default function ContentGeneratorForm({
   setPrompt,
   aspectRatio,
   setAspectRatio,
+  imageSize,
+  setImageSize,
   loading,
   handleSubmit,
 }: ContentGeneratorFormProps) {
+  const [imageProvider, setImageProvider] = useState<string | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState(true);
+
+  useEffect(() => {
+    const fetchImageProvider = async () => {
+      const provider = await getImageProvider();
+      setImageProvider(provider);
+      setLoadingProvider(false);
+    };
+
+    if (activeTab === "image") {
+      fetchImageProvider();
+    }
+  }, [activeTab]);
+
+  if (loadingProvider) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-      {(activeTab === "image" || activeTab === "video") && (
+    <div>
+      {activeTab === "image" && (
         <>
-          <div>
-            <Label htmlFor="prompt">Prompt</Label>
-            <Textarea
-              id="prompt"
-              placeholder="Describe the image or video you want to generate..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              required
+          {imageProvider === "replicate" && (
+            <ImageGeneratorForm
+              prompt={prompt}
+              setPrompt={setPrompt}
+              aspectRatio={aspectRatio}
+              setAspectRatio={setAspectRatio}
+              loading={loading}
+              handleSubmit={handleSubmit}
             />
-          </div>
-          <div>
-            <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
-            <Select value={aspectRatio} onValueChange={setAspectRatio}>
-              <SelectTrigger id="aspect-ratio">
-                <SelectValue placeholder="Select aspect ratio" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                <SelectItem value="4:3">4:3 (Standard)</SelectItem>
-                <SelectItem value="16:9">16:9 (Widescreen)</SelectItem>
-                <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
-                <SelectItem value="3:4">3:4 (Vertical)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
-              <Loader2 className="animate-spin mr-2 h-4 w-4" />
-            ) : (
-              "Generate"
-            )}
-          </Button>
+          )}
+          {imageProvider === "fal" && (
+            <GenerateImageFal
+              prompt={prompt}
+              setPrompt={setPrompt}
+              imageSize={imageSize}
+              setImageSize={setImageSize}
+              loading={loading}
+              handleSubmit={handleSubmit}
+            />
+          )}
         </>
       )}
-    </form>
+
+      {activeTab === "video" && (
+        <VideoGeneratorForm
+          prompt={prompt}
+          setPrompt={setPrompt}
+          aspectRatio={aspectRatio}
+          setAspectRatio={setAspectRatio}
+          loading={loading}
+          handleSubmit={handleSubmit}
+        />
+      )}
+    </div>
   );
 }

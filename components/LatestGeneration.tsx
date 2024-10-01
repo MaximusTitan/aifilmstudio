@@ -24,7 +24,11 @@ export default function LatestGeneration({
       <h2 className="text-2xl font-semibold">Latest Generation</h2>
       <div className="mt-2">
         {latestGeneration.type === "image" && (
-          <img src={latestGeneration.url} alt="Generated" className="rounded-lg shadow-lg" />
+          <img
+            src={latestGeneration.url}
+            alt="Generated"
+            className="rounded-lg shadow-lg"
+          />
         )}
         {latestGeneration.type === "video" && (
           <video controls className="rounded-lg shadow-lg">
@@ -43,7 +47,12 @@ export default function LatestGeneration({
 
       <div className="mt-2">
         <Button
-          onClick={() => handleDownload(latestGeneration.url, `${latestGeneration.type}-${latestGeneration.id}`)}
+          onClick={() =>
+            handleDownload(
+              latestGeneration.url,
+              `${latestGeneration.type}-${latestGeneration.id}`
+            )
+          }
           className="mr-2"
           variant={"outline"}
         >
