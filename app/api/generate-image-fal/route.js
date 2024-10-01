@@ -16,7 +16,7 @@ export async function POST(request) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await supabase.auth.getUser(request.headers);
 
     if (userError || !user) {
       return NextResponse.json(
