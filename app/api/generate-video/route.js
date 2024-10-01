@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 import LumaAI from "lumaai";
 import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 export const maxDuration = 300;
 
@@ -9,7 +10,9 @@ export async function POST(request) {
   try {
     const { prompt, aspect_ratio } = await request.json();
 
-    const supabase = createClient();
+    // Create the Supabase client using the createClient function
+    // Pass the cookies() function to ensure it's called within the request context
+    const supabase = createClient(cookies());
 
     const {
       data: { user },

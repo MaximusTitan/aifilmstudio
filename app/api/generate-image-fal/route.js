@@ -11,8 +11,6 @@ export async function POST(request) {
     const body = await request.json();
     const { prompt, image_size, num_inference_steps, num_images } = body;
 
-    // Create the Supabase client using the createClient function
-    // This function now handles the cookies internally
     const supabase = createClient();
 
     const {
