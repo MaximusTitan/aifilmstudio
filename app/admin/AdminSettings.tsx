@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/utils/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
 
 type ImageProvider = "replicate" | "fal";
 
@@ -19,15 +18,9 @@ export default function AdminSettings() {
     useState<ImageProvider>("replicate");
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
-  const session = useSession();
 
   useEffect(() => {
     const fetchCurrentProvider = async () => {
-      if (!session) {
-        console.error("User not authenticated");
-        return;
-      }
-
       const { data, error } = await supabase
         .from("settings")
         .select("value")
@@ -42,17 +35,11 @@ export default function AdminSettings() {
     };
 
     fetchCurrentProvider();
-  }, [supabase, session]);
+  }, [supabase]);
 
   const handleProviderChange = async (value: ImageProvider) => {
     setLoading(true);
     try {
-      // Ensure user is authenticated before making updates
-      if (!session) {
-        console.error("User not authenticated");
-        return;
-      }
-
       const { error } = await supabase
         .from("settings")
         .upsert({ key: "image_provider", value }, { onConflict: "key" });
