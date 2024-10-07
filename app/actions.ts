@@ -24,6 +24,24 @@ export const getImageProvider = async () => {
   return data?.value;
 };
 
+export const getVideoProvider = async () => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("settings")
+    .select("value")
+    .eq("key", "video_provider")
+    .single();
+
+  if (error) {
+    console.error("Error fetching video provider:", error);
+    return null;
+  }
+
+  return data?.value; 
+};
+
+
 export const signUpAction = async (formData: FormData) => {
   const supabase = createClient();
   

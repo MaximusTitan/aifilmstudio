@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +60,20 @@ export default function AdminUsersPage() {
   const [activeTab, setActiveTab] = useState<
     "users" | "generations" | "settings"
   >("users");
+  const [hoveredPath, setHoveredPath] = useState<string | null>(null);
+  const [modalPosition, setModalPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  const handleMouseEnter = (path: string) => {
+    setHoveredPath(path);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredPath(null);
+    setModalPosition(null);
+  };
 
   const [creditInputs, setCreditInputs] = useState<{
     [key: string]: { image_credits: number; video_credits: number };
@@ -421,35 +435,73 @@ export default function AdminUsersPage() {
                       <Video className="w-4 h-4" />
                     )}
                   </TableCell>
+
                   <TableCell>
-                    <a
-                      href={gen.result_path.toString()}
-                      className="relative inline-block"
+                    <div
+                      className="relative"
+                      onMouseEnter={() =>
+                        handleMouseEnter(gen.result_path.toString())
+                      }
+                      onMouseLeave={handleMouseLeave}
                     >
-                      {gen.result_path.toString().match(/\.(mp4|webm)$/) ? (
-                        <div className="relative flex items-center justify-center">
-                          <video className="max-w-full h-auto min-w-[100px] min-h-[80px]">
-                            <source
-                              src={gen.result_path.toString()}
-                              type="video/mp4"
-                            />
-                            Your browser does not support the video tag.
-                          </video>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Play className="w-6 h-6 text-white" />
+                      <div className="relative inline-block cursor-pointer">
+                        {gen.type === "video" ? (
+                          <div className="relative flex items-center justify-center">
+                            <video className="max-w-full h-auto min-w-[100px] min-h-[80px]">
+                              <source
+                                src={gen.result_path.toString()}
+                                type="video/mp4"
+                              />
+                              Your browser does not support the video tag.
+                            </video>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Play className="w-6 h-6 text-white" />
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center">
-                          <img
-                            src={gen.result_path.toString()}
-                            className="max-w-full h-auto min-w-[100px] min-h-[80px]"
-                            alt=""
-                          />
+                        ) : (
+                          <div className="flex items-center justify-center">
+                            <img
+                              src={gen.result_path.toString()}
+                              className="max-w-full h-auto min-w-[100px] min-h-[80px]"
+                              alt="Generated content"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {hoveredPath === gen.result_path.toString() && (
+                        <div
+                          className="absolute top-12 left-1/2 transform -translate-x-1/2 transition-all duration-300 ease-in-out scale-95 hover:scale-100 bg-white shadow-lg p-0 rounded-lg z-50"
+                          style={{
+                            width: "800px",
+                            height: "auto",
+                            maxHeight: "80vh",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {gen.type === "video" ? (
+                            <video
+                              className="w-full h-auto rounded-lg"
+                              autoPlay
+                            >
+                              <source
+                                src={hoveredPath || ""}
+                                type="video/mp4"
+                              />
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <img
+                              src={hoveredPath || ""}
+                              className="w-full h-auto rounded-lg"
+                              alt="Generated content"
+                            />
+                          )}
                         </div>
                       )}
-                    </a>
+                    </div>
                   </TableCell>
+
                   <TableCell>
                     {new Date(gen.created_at).toLocaleString()}
                   </TableCell>
@@ -459,6 +511,7 @@ export default function AdminUsersPage() {
           </Table>
         </div>
       )}
+
       {activeTab === "settings" && <AdminSettings />}
     </div>
   );

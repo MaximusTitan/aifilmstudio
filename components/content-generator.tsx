@@ -7,6 +7,7 @@ import LatestGeneration from "./LatestGeneration";
 import GenerationList from "./GenerationList";
 import axios from "axios";
 import { getImageProvider } from "@/app/actions";
+
 type Generation = {
   id: string;
   type: "image" | "video" | "image-to-video";
@@ -88,9 +89,7 @@ export default function ContentGenerator() {
         url:
           activeTab === "image"
             ? response.data.imageUrl
-            : activeTab === "video"
-              ? response.data.videoUrl
-              : response.data.imageUrl,
+            : response.data.videoUrl,
         prompt: prompt,
         created_at: new Date().toISOString(),
       };
@@ -192,6 +191,8 @@ export default function ContentGenerator() {
             setPrompt={setPrompt}
             handleImageToVideo={handleImageToVideo}
             loading={loading}
+            setLoading={setLoading} // Pass the actual setLoading function
+            videoProvider={null}
           />
           <ContentGeneratorForm
             activeTab={activeTab}
@@ -203,6 +204,9 @@ export default function ContentGenerator() {
             setImageSize={setImageSize}
             loading={loading}
             handleSubmit={handleSubmit}
+            selectedImage={selectedImage}
+            setSelectedImage={setSelectedImage}
+            handleImageToVideo={handleImageToVideo}
           />
         </div>
         {latestGeneration && (

@@ -94,7 +94,7 @@ export async function POST(request) {
       );
     }
 
-    const creditsUsed = 5;
+    const creditsUsed = 1;
 
     const { data: userData, error: userCreditsError } = await supabase
       .from("users")

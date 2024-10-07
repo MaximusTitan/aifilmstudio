@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getImageProvider } from "@/app/actions";
+import { getImageProvider, getVideoProvider } from "@/app/actions"; // Assuming getVideoProvider is available
 import ImageGeneratorForm from "./ImageGeneratorForm";
 import VideoGeneratorForm from "./VideoGeneratorForm";
 import GenerateImageFal from "./GenerateImageFal";
@@ -14,6 +14,9 @@ type ContentGeneratorFormProps = {
   setImageSize: (aspectRatio: string) => void;
   loading: boolean;
   handleSubmit: (e: React.FormEvent) => void;
+  selectedImage: string | null;
+  setSelectedImage: (url: string) => void;
+  handleImageToVideo: () => void;
 };
 
 export default function ContentGeneratorForm({
@@ -26,24 +29,41 @@ export default function ContentGeneratorForm({
   setImageSize,
   loading,
   handleSubmit,
+  selectedImage,
+  setSelectedImage,
+  handleImageToVideo,
 }: ContentGeneratorFormProps) {
   const [imageProvider, setImageProvider] = useState<string | null>(null);
-  const [loadingProvider, setLoadingProvider] = useState(true);
+  const [loadingProviders, setLoadingProviders] = useState(true);
+  const [error, setError] = useState<string | null>(null); // To hold error messages
 
   useEffect(() => {
-    const fetchImageProvider = async () => {
-      const provider = await getImageProvider();
-      setImageProvider(provider);
-      setLoadingProvider(false);
+    const fetchProviders = async () => {
+      try {
+        setLoadingProviders(true);
+        const [imageProviderResult, videoProviderResult] = await Promise.all([
+          getImageProvider(),
+          getVideoProvider(),
+        ]);
+
+        setImageProvider(imageProviderResult);
+      } catch (err) {
+        console.error("Error fetching providers:", err);
+        setError("Failed to load providers. Please try again.");
+      } finally {
+        setLoadingProviders(false);
+      }
     };
 
-    if (activeTab === "image") {
-      fetchImageProvider();
-    }
-  }, [activeTab]);
+    fetchProviders();
+  }, []);
 
-  if (loadingProvider) {
-    return <div>Loading...</div>;
+  if (loadingProviders) {
+    return <div>Loading...</div>; // Keep this loading state while fetching providers
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>; // Show error if fetching fails
   }
 
   return (
