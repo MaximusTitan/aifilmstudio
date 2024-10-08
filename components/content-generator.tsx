@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, SetStateAction } from "react";
 import ContentTabs from "./ContentTabs";
 import ContentGeneratorForm from "./ContentGeneratorForm";
 import LatestGeneration from "./LatestGeneration";
@@ -13,7 +13,7 @@ type Generation = {
   type: "image" | "video" | "image-to-video";
   url: string;
   prompt: string;
-  created_at?: string;
+  created_at: string;
 };
 
 export default function ContentGenerator() {
@@ -23,7 +23,7 @@ export default function ContentGenerator() {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [imageSize, setImageSize] = useState("landscape_16_9");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // State to handle loading
   const [error, setError] = useState("");
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [latestGeneration, setLatestGeneration] = useState<Generation | null>(
@@ -61,7 +61,6 @@ export default function ContentGenerator() {
     try {
       let endpoint =
         activeTab === "image" ? "/api/generate-image" : "/api/generate-video";
-
       const imageProvider = await getImageProvider();
       let requestBody: any = { prompt, aspect_ratio: aspectRatio };
 
@@ -76,7 +75,6 @@ export default function ContentGenerator() {
       }
 
       console.log("Sending request to:", endpoint, "with body:", requestBody);
-
       const response = await axios.post(endpoint, requestBody);
 
       if (response.status !== 200) {
@@ -191,7 +189,7 @@ export default function ContentGenerator() {
             setPrompt={setPrompt}
             handleImageToVideo={handleImageToVideo}
             loading={loading}
-            setLoading={setLoading} // Pass the actual setLoading function
+            setLoading={setLoading} // Pass the actual setLoading function here
             videoProvider={null}
           />
           <ContentGeneratorForm
@@ -207,6 +205,9 @@ export default function ContentGenerator() {
             selectedImage={selectedImage}
             setSelectedImage={setSelectedImage}
             handleImageToVideo={handleImageToVideo}
+            setLoading={setLoading} // Correct: Use actual state updater function
+            setError={setError} // Correct: Use actual state updater function
+            setLatestGeneration={setLatestGeneration} // Correct: Use actual state updater function
           />
         </div>
         {latestGeneration && (
