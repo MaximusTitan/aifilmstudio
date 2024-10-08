@@ -1,10 +1,24 @@
 import { signOutAction } from "@/app/actions";
 import { hasEnvVars } from "@/utils/supabase/check-env-vars";
 import Link from "next/link";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
-import { Image, Video } from "lucide-react";
+import { Image, Video, User, Settings, LogOut } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const getAdminEmails = () => {
+  const emails = process.env.NEXT_PUBLIC_ADMIN_EMAILS || "";
+  return emails.split(",").map((email) => email.trim());
+};
 
 export default async function AuthButton() {
   const supabase = createClient();
@@ -48,7 +62,7 @@ export default async function AuthButton() {
     );
   }
 
-  const adminEmails = ["yohan@igebra.ai", "chirans@gmail.com"];
+  const adminEmails = getAdminEmails();
 
   let userImageCredits = 0;
   let userVideoCredits = 0;
@@ -68,33 +82,68 @@ export default async function AuthButton() {
   }
 
   return user ? (
-    <div className="flex flex-col md:flex-row items-center justify-between w-full p-4">
-      <span className="text-sm">Hey, {user.email}!</span>
-      <div className="flex items-center gap-4 mt-2 md:mt-0">
+    <div className="flex items-center justify-end w-full p-4">
+      <div className="flex items-center gap-4">
         <span className="flex items-center mr-4">
           <Image className="mr-2 h-4 w-4" />
-          Credits: {userImageCredits}
+          <span className="text-sm">{userImageCredits}</span>
         </span>
-        <span className="flex items-center">
+        <span className="flex items-center mr-4">
           <Video className="mr-2 h-4 w-4" />
-          Credits: {userVideoCredits}
+          <span className="text-sm">{userVideoCredits}</span>
         </span>
 
-        {user.email && adminEmails.includes(user.email) && (
-          <Link href="/admin">
-            <Button variant="outline">Admin</Button>
-          </Link>
-        )}
-
-        <Link href="/credits">
-          <Button variant="outline">Credits</Button>
-        </Link>
-
-        <form action={signOutAction}>
-          <Button type="submit" variant={"outline"}>
-            Sign out
-          </Button>
-        </form>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="relative h-8 w-8 rounded-full p-0"
+            >
+              {" "}
+              <Avatar className="h-8 w-8">
+                <AvatarImage
+                  src="/placeholder.svg?height=32&width=32"
+                  alt={user.email || ""}
+                  className="rounded-full"
+                />
+                <AvatarFallback>
+                  {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {user.email && adminEmails.includes(user.email) && (
+              <DropdownMenuItem asChild>
+                <Link href="/admin">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Admin</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link href="/credits">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Credits</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <form action={signOutAction} className="w-full">
+                <button type="submit" className="flex w-full items-center">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </button>
+              </form>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   ) : (
