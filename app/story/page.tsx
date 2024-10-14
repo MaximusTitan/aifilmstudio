@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import ContentGenerator from "@/components/content-generator";
+import { StoryGeneratorComponent } from "@/components/story-generator";
 
 export default async function ProtectedPage() {
   const supabase = createClient();
@@ -15,7 +15,7 @@ export default async function ProtectedPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <ContentGenerator />
+      <StoryGeneratorComponent />
     </main>
   );
 }

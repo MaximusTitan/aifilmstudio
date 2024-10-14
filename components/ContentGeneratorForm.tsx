@@ -22,9 +22,9 @@ type ContentGeneratorFormProps = {
   imageSize: string;
   setImageSize: React.Dispatch<React.SetStateAction<string>>;
   loading: boolean;
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>; // <-- Add this
-  setError: React.Dispatch<React.SetStateAction<string>>; // <-- Add this
-  setLatestGeneration: React.Dispatch<React.SetStateAction<Generation | null>>; // <-- Add this
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<string>>;
+  setLatestGeneration: React.Dispatch<React.SetStateAction<Generation | null>>;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   selectedImage: string | null;
   setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>;
@@ -47,7 +47,7 @@ export default function ContentGeneratorForm({
   const [imageProvider, setImageProvider] = useState<string | null>(null);
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [generations, updateGenerations] = useState<Generation[]>([]); // <== State for generations
+  const [generations, updateGenerations] = useState<Generation[]>([]);
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -109,7 +109,6 @@ export default function ContentGeneratorForm({
         created_at: new Date().toISOString(),
       };
 
-      // Directly update generations array
       const updatedGenerations = [...generations, newGeneration];
       // setGenerations(updatedGenerations); // Pass the updated array directly
       updateGenerations(updatedGenerations); // Update the local state of generations

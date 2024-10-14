@@ -84,6 +84,12 @@ export default async function AuthButton() {
   return user ? (
     <div className="flex items-center justify-end w-full p-4">
       <div className="flex items-center gap-4">
+        <Button asChild size="sm" variant={"outline"}>
+          <Link href="/story">Story</Link>
+        </Button>
+        <Button asChild size="sm" variant={"outline"}>
+          <Link href="/dashboard">Content</Link>
+        </Button>
         <span className="flex items-center mr-4">
           <Image className="mr-2 h-4 w-4" />
           <span className="text-sm">{userImageCredits}</span>
