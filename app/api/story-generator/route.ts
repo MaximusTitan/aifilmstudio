@@ -16,7 +16,8 @@ export async function POST(request: Request) {
   if (type === "screenplay") {
     messages = [{ role: "user", content: `Please convert this story to a screenplay: ${prompt}` }];
   } else if (type === "imagePrompts") {
-    messages = [{ role: "user", content: `Please generate image prompts for the following story: ${prompt}` }];
+    messages = [{ role: "user", content: `Please generate detailed image prompts based on the following story: ${prompt}. 
+              Ensure the prompts are realistic, cinematic, and describe characters in detail, and maintain consistency in each prompt. Do not send numbers or title names for prompts just send me the prompt.` }];
   }
 
   try {
@@ -29,7 +30,6 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: 500,
         temperature: 0.7,
       }),
     });
