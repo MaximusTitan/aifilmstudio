@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import axios from "axios";
 
 export function StoryGeneratorComponent() {
   type Story = {
@@ -14,6 +15,7 @@ export function StoryGeneratorComponent() {
     screenplay: string;
     imagePrompts: string[];
     generatedImages: string[];
+    generatedVideo?: string;
   };
 
   const [stories, setStories] = useState<Story[]>([]);
@@ -179,6 +181,50 @@ export function StoryGeneratorComponent() {
     }
   };
 
+  const generateVideo = async () => {
+    // Ensure there are generated images available
+    if (!currentStory.generatedImages.length) {
+      return alert("No images available.");
+    }
+
+    setLoading(true);
+
+    try {
+      // Construct the prompt and image URL
+      const firstScenePrompt = currentStory.imagePrompts[0]; // Assuming you want to use the first prompt
+      const imageUrl = currentStory.generatedImages[0]; // Assuming this is the correct image URL
+
+      // Prepare the payload for the API request
+      const payload = {
+        prompt: firstScenePrompt,
+        imageUrl: imageUrl,
+      };
+
+      // Send a POST request to your backend API
+      const response = await axios.post("/api/image-to-video-runway", payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      // Check for a successful response and handle the generated video URL
+      if (response.status === 200) {
+        setCurrentStory((prev) => ({
+          ...prev,
+          generatedVideo: response.data.videoUrl, // Set the generated video URL
+        }));
+        setActiveTab("generatedVideo"); // Switch to the generated video tab
+      } else {
+        alert(`Error: ${response.data.message}`);
+      }
+    } catch (error) {
+      console.error("Error generating video:", error);
+      alert("Error generating the video. Please try again.");
+    } finally {
+      setLoading(false); // Reset loading state
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Story Generator</h1>
@@ -190,6 +236,7 @@ export function StoryGeneratorComponent() {
           <TabsTrigger value="screenplay">Screenplay</TabsTrigger>
           <TabsTrigger value="imagePrompts">Image Prompts</TabsTrigger>
           <TabsTrigger value="generatedImages">Generated Images</TabsTrigger>
+          <TabsTrigger value="generatedVideo">Generated Video</TabsTrigger>
         </TabsList>
 
         {/* Prompt Tab */}
@@ -200,13 +247,8 @@ export function StoryGeneratorComponent() {
                 placeholder="Enter your story prompt..."
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                disabled={loading}
               />
-              <Button
-                onClick={generateStory}
-                disabled={loading}
-                className="w-full"
-              >
+              <Button onClick={generateStory} className="w-full">
                 {loading ? "Generating..." : "Generate Story"}
               </Button>
             </CardContent>
@@ -217,21 +259,21 @@ export function StoryGeneratorComponent() {
         <TabsContent value="story">
           <Card>
             <CardContent className="space-y-4 pt-4">
-              <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+              <ScrollArea className="h-[300px]">
                 {currentStory.story ? (
                   <pre className="whitespace-pre-wrap">
                     {currentStory.story}
                   </pre>
                 ) : (
                   "Story not generated yet!"
-                )}
+                )}{" "}
               </ScrollArea>
               <Button
                 onClick={generateScreenplay}
-                disabled={!currentStory.story || loading}
+                disabled={loading || !currentStory.story}
                 className="w-full"
               >
-                {loading ? "Converting..." : "Convert to Screenplay"}
+                {loading ? "Generating..." : "Generate Screenplay"}
               </Button>
             </CardContent>
           </Card>
@@ -241,7 +283,7 @@ export function StoryGeneratorComponent() {
         <TabsContent value="screenplay">
           <Card>
             <CardContent className="space-y-4 pt-4">
-              <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+              <ScrollArea className="h-[300px]">
                 {currentStory.screenplay ? (
                   <pre className="whitespace-pre-wrap">
                     {currentStory.screenplay}
@@ -252,7 +294,7 @@ export function StoryGeneratorComponent() {
               </ScrollArea>
               <Button
                 onClick={generateImagePrompts}
-                disabled={!currentStory.screenplay || loading}
+                disabled={loading || !currentStory.screenplay}
                 className="w-full"
               >
                 {loading ? "Generating..." : "Generate Image Prompts"}
@@ -294,16 +336,16 @@ export function StoryGeneratorComponent() {
             <CardContent className="space-y-4 pt-4">
               <ScrollArea className="h-[300px]">
                 {currentStory.generatedImages.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    {currentStory.generatedImages.map((url, index) => (
-                      <div key={index} className="mb-2">
-                        <h3 className="font-semibold text-sm mb-1">
-                          Image {index + 1}
-                        </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {currentStory.generatedImages.map((imageUrl, index) => (
+                      <div
+                        key={index}
+                        className="rounded-md overflow-hidden shadow-lg"
+                      >
                         <img
-                          src={url}
-                          alt={`Generated ${index + 1}`}
-                          className="rounded-md w-full h-48 object-cover"
+                          src={imageUrl}
+                          alt={`Generated Image ${index + 1}`}
+                          className="w-full h-auto"
                         />
                       </div>
                     ))}
@@ -312,32 +354,34 @@ export function StoryGeneratorComponent() {
                   <p>No images generated yet!</p>
                 )}
               </ScrollArea>
+              <Button
+                onClick={generateVideo}
+                disabled={loading || currentStory.generatedImages.length === 0}
+                className="w-full"
+              >
+                {loading ? "Generating..." : "Generate Video"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Generated Video Tab */}
+        <TabsContent value="generatedVideo">
+          <Card>
+            <CardContent className="space-y-4 pt-4">
+              {currentStory.generatedVideo ? (
+                <video
+                  controls
+                  src={currentStory.generatedVideo}
+                  className="w-full rounded-md"
+                />
+              ) : (
+                <p>No video generated yet!</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-
-      <h2 className="text-xl font-bold mt-8 mb-4">Your Past Stories</h2>
-      {stories.length === 0 ? (
-        <p className="text-gray-500">
-          No stories created yet. Start by generating one!
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {stories.map((story, index) => (
-            <Card key={index}>
-              <CardContent className="pt-4">
-                <h3 className="font-bold">{story.prompt}</h3>
-                <p className="mt-2">
-                  {story.story
-                    ? story.story.substring(0, 100) + "..."
-                    : "No story available"}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
