@@ -29,12 +29,19 @@ export function StoryGeneratorComponent() {
   const [activeTab, setActiveTab] = useState("prompt");
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleError = (message: string) => {
+    setError(message);
+    setLoading(false);
+  };
 
   // Generate story
   const generateStory = async () => {
-    if (!prompt) return alert("Please enter a story prompt!");
+    if (!prompt) return handleError("Please enter a story prompt!");
 
     setLoading(true);
+    setError(null); // Reset error state
     try {
       const fullPrompt = `Write a captivating story based on the following idea: ${prompt}. 
                           Provide the story in a narrative format, ensuring the story and characters are cinematic and immersive.`;
@@ -53,7 +60,6 @@ export function StoryGeneratorComponent() {
       }
 
       const data = await response.json();
-      console.log("Generated Story Data:", data); // Debugging log
 
       const newStory = {
         ...currentStory,
@@ -65,8 +71,9 @@ export function StoryGeneratorComponent() {
       setStories((prev) => [...prev, newStory]);
       setActiveTab("story");
     } catch (error) {
-      console.error("Error generating story:", error);
-      alert("An error occurred while generating the story. Please try again.");
+      handleError(
+        "An error occurred while generating the story. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -77,6 +84,7 @@ export function StoryGeneratorComponent() {
     if (!currentStory.story) return;
 
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch("/api/story-generator", {
         method: "POST",
@@ -88,7 +96,6 @@ export function StoryGeneratorComponent() {
       });
 
       const data = await response.json();
-      console.log("Generated Screenplay Data:", data); // Debugging log
 
       setCurrentStory((prev) => ({
         ...prev,
@@ -96,8 +103,7 @@ export function StoryGeneratorComponent() {
       }));
       setActiveTab("screenplay");
     } catch (error) {
-      console.error("Error generating screenplay:", error);
-      alert(
+      handleError(
         "An error occurred while generating the screenplay. Please try again."
       );
     } finally {
@@ -110,6 +116,7 @@ export function StoryGeneratorComponent() {
     if (!currentStory.screenplay) return;
 
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch("/api/story-generator", {
         method: "POST",
@@ -121,7 +128,6 @@ export function StoryGeneratorComponent() {
       });
 
       const data = await response.json();
-      console.log("Generated Image Prompts:", data); // Debugging log
 
       const imagePrompts = data.result
         .split("\n")
@@ -133,8 +139,7 @@ export function StoryGeneratorComponent() {
       }));
       setActiveTab("imagePrompts");
     } catch (error) {
-      console.error("Error generating image prompts:", error);
-      alert("An error occurred while generating image prompts.");
+      handleError("An error occurred while generating image prompts.");
     } finally {
       setLoading(false);
     }
@@ -145,6 +150,7 @@ export function StoryGeneratorComponent() {
     if (currentStory.imagePrompts.length === 0) return;
 
     setLoading(true);
+    setError(null);
     try {
       const responses = await Promise.all(
         currentStory.imagePrompts.map((prompt) =>
@@ -174,54 +180,68 @@ export function StoryGeneratorComponent() {
       }));
       setActiveTab("generatedImages");
     } catch (error) {
-      console.error("Error generating images:", error);
-      alert("An error occurred while generating images.");
+      handleError("An error occurred while generating images.");
     } finally {
       setLoading(false);
     }
   };
 
   const generateVideo = async () => {
-    // Ensure there are generated images available
-    if (!currentStory.generatedImages.length) {
-      return alert("No images available.");
+    if (
+      !currentStory.generatedImages.length ||
+      !currentStory.imagePrompts.length
+    ) {
+      return handleError("No images or prompts available.");
     }
 
     setLoading(true);
+    setError(null);
 
     try {
-      // Construct the prompt and image URL
-      const firstScenePrompt = currentStory.imagePrompts[0]; // Assuming you want to use the first prompt
-      const imageUrl = currentStory.generatedImages[0]; // Assuming this is the correct image URL
+      // Collect video generation promises
+      const videoPromises = currentStory.imagePrompts.map(
+        async (prompt, index) => {
+          const imageUrl = currentStory.generatedImages[index]; // Get corresponding image for each prompt
+          if (!imageUrl) {
+            throw new Error(
+              `Image URL for prompt ${index + 1} is not available.`
+            );
+          }
 
-      // Prepare the payload for the API request
-      const payload = {
-        prompt: firstScenePrompt,
-        imageUrl: imageUrl,
-      };
+          const payload = {
+            prompt: prompt,
+            imageUrl: imageUrl,
+          };
 
-      // Send a POST request to your backend API
-      const response = await axios.post("/api/image-to-video-runway", payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+          const response = await axios.post(
+            "/api/image-to-video-runway",
+            payload,
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
-      // Check for a successful response and handle the generated video URL
-      if (response.status === 200) {
-        setCurrentStory((prev) => ({
-          ...prev,
-          generatedVideo: response.data.videoUrl, // Set the generated video URL
-        }));
-        setActiveTab("generatedVideo"); // Switch to the generated video tab
-      } else {
-        alert(`Error: ${response.data.message}`);
-      }
+          if (response.status === 200) {
+            return response.data.videoUrl; // Collect video URL
+          } else {
+            throw new Error(`Error: ${response.data.message}`);
+          }
+        }
+      );
+
+      // Wait for all video generation promises to resolve
+      const videoUrls = await Promise.all(videoPromises);
+      setCurrentStory((prev) => ({
+        ...prev,
+        generatedVideo: videoUrls.join(", "), // Save all generated video URLs as a single string
+      }));
+      setActiveTab("generatedVideo");
     } catch (error) {
-      console.error("Error generating video:", error);
-      alert("Error generating the video. Please try again.");
+      handleError("Error generating the video. Please try again.");
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -229,8 +249,10 @@ export function StoryGeneratorComponent() {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Story Generator</h1>
 
+      {error && <div className="mb-4 text-red-500">{error}</div>}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="prompt">Prompt</TabsTrigger>
           <TabsTrigger value="story">Story</TabsTrigger>
           <TabsTrigger value="screenplay">Screenplay</TabsTrigger>
@@ -247,8 +269,13 @@ export function StoryGeneratorComponent() {
                 placeholder="Enter your story prompt..."
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
+                disabled={loading}
               />
-              <Button onClick={generateStory} className="w-full">
+              <Button
+                onClick={generateStory}
+                className="w-full"
+                disabled={loading}
+              >
                 {loading ? "Generating..." : "Generate Story"}
               </Button>
             </CardContent>
@@ -265,8 +292,8 @@ export function StoryGeneratorComponent() {
                     {currentStory.story}
                   </pre>
                 ) : (
-                  "Story not generated yet!"
-                )}{" "}
+                  <p className="text-gray-500">Story not generated yet!</p>
+                )}
               </ScrollArea>
               <Button
                 onClick={generateScreenplay}
@@ -289,7 +316,7 @@ export function StoryGeneratorComponent() {
                     {currentStory.screenplay}
                   </pre>
                 ) : (
-                  "Screenplay not generated yet!"
+                  <p className="text-gray-500">Screenplay not generated yet!</p>
                 )}
               </ScrollArea>
               <Button
@@ -316,7 +343,9 @@ export function StoryGeneratorComponent() {
                     </div>
                   ))
                 ) : (
-                  <p>No image prompts generated yet!</p>
+                  <p className="text-gray-500">
+                    No image prompts generated yet!
+                  </p>
                 )}
               </ScrollArea>
               <Button
@@ -351,7 +380,7 @@ export function StoryGeneratorComponent() {
                     ))}
                   </div>
                 ) : (
-                  <p>No images generated yet!</p>
+                  <p className="text-gray-500">No images generated yet!</p>
                 )}
               </ScrollArea>
               <Button
@@ -369,14 +398,24 @@ export function StoryGeneratorComponent() {
         <TabsContent value="generatedVideo">
           <Card>
             <CardContent className="space-y-4 pt-4">
-              {currentStory.generatedVideo ? (
-                <video
-                  controls
-                  src={currentStory.generatedVideo}
-                  className="w-full rounded-md"
-                />
+              {currentStory.generatedVideo &&
+              currentStory.generatedVideo.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {" "}
+                  {/* Use grid with 2 columns */}
+                  {currentStory.generatedVideo
+                    .split(", ")
+                    .map((videoUrl, index) => (
+                      <video
+                        key={index}
+                        controls
+                        src={videoUrl}
+                        className="w-full h-48 rounded-md"
+                      />
+                    ))}
+                </div>
               ) : (
-                <p>No video generated yet!</p>
+                <p className="text-gray-500">No video generated yet!</p>
               )}
             </CardContent>
           </Card>
