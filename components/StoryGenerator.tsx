@@ -2,22 +2,24 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import axios from "axios";
+import { PromptTab } from "./PromptTab";
+import { StoryTab } from "./StoryTab";
+import { ScreenplayTab } from "./ScreenplayTab";
+import { ImagePromptsTab } from "./ImagePromptsTab";
+import { GeneratedImagesTab } from "./GeneratedImagesTab";
+import { GeneratedVideoTab } from "./GeneratedVideoTab";
+
+type Story = {
+  prompt: string;
+  story: string;
+  screenplay: string;
+  imagePrompts: string[];
+  generatedImages: string[];
+  generatedVideo?: string;
+};
 
 export function StoryGeneratorComponent() {
-  type Story = {
-    prompt: string;
-    story: string;
-    screenplay: string;
-    imagePrompts: string[];
-    generatedImages: string[];
-    generatedVideo?: string;
-  };
-
   const [stories, setStories] = useState<Story[]>([]);
   const [currentStory, setCurrentStory] = useState<Story>({
     prompt: "",
@@ -261,164 +263,49 @@ export function StoryGeneratorComponent() {
           <TabsTrigger value="generatedVideo">Generated Video</TabsTrigger>
         </TabsList>
 
-        {/* Prompt Tab */}
         <TabsContent value="prompt">
-          <Card>
-            <CardContent className="space-y-4 pt-4">
-              <Input
-                placeholder="Enter your story prompt..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                disabled={loading}
-              />
-              <Button
-                onClick={generateStory}
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? "Generating..." : "Generate Story"}
-              </Button>
-            </CardContent>
-          </Card>
+          <PromptTab
+            prompt={prompt}
+            loading={loading}
+            onPromptChange={setPrompt}
+            onGenerate={generateStory}
+          />
         </TabsContent>
 
-        {/* Story Tab */}
         <TabsContent value="story">
-          <Card>
-            <CardContent className="space-y-4 pt-4">
-              <ScrollArea className="h-[300px]">
-                {currentStory.story ? (
-                  <pre className="whitespace-pre-wrap">
-                    {currentStory.story}
-                  </pre>
-                ) : (
-                  <p className="text-gray-500">Story not generated yet!</p>
-                )}
-              </ScrollArea>
-              <Button
-                onClick={generateScreenplay}
-                disabled={loading || !currentStory.story}
-                className="w-full"
-              >
-                {loading ? "Generating..." : "Generate Screenplay"}
-              </Button>
-            </CardContent>
-          </Card>
+          <StoryTab
+            story={currentStory.story}
+            loading={loading}
+            onGenerateScreenplay={generateScreenplay}
+          />
         </TabsContent>
 
-        {/* Screenplay Tab */}
         <TabsContent value="screenplay">
-          <Card>
-            <CardContent className="space-y-4 pt-4">
-              <ScrollArea className="h-[300px]">
-                {currentStory.screenplay ? (
-                  <pre className="whitespace-pre-wrap">
-                    {currentStory.screenplay}
-                  </pre>
-                ) : (
-                  <p className="text-gray-500">Screenplay not generated yet!</p>
-                )}
-              </ScrollArea>
-              <Button
-                onClick={generateImagePrompts}
-                disabled={loading || !currentStory.screenplay}
-                className="w-full"
-              >
-                {loading ? "Generating..." : "Generate Image Prompts"}
-              </Button>
-            </CardContent>
-          </Card>
+          <ScreenplayTab
+            screenplay={currentStory.screenplay}
+            loading={loading}
+            onGenerateImagePrompts={generateImagePrompts}
+          />
         </TabsContent>
 
-        {/* Image Prompts Tab */}
         <TabsContent value="imagePrompts">
-          <Card>
-            <CardContent className="space-y-4 pt-4">
-              <ScrollArea className="h-[300px]">
-                {currentStory.imagePrompts.length > 0 ? (
-                  currentStory.imagePrompts.map((prompt, index) => (
-                    <div key={index} className="mb-4">
-                      <h3 className="font-bold">Scene {index + 1}</h3>
-                      <p className="w-full rounded-md border p-4">{prompt}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500">
-                    No image prompts generated yet!
-                  </p>
-                )}
-              </ScrollArea>
-              <Button
-                onClick={generateImages}
-                disabled={loading || currentStory.imagePrompts.length === 0}
-                className="w-full"
-              >
-                {loading ? "Generating..." : "Generate Images"}
-              </Button>
-            </CardContent>
-          </Card>
+          <ImagePromptsTab
+            imagePrompts={currentStory.imagePrompts}
+            loading={loading}
+            onGenerateImages={generateImages}
+          />
         </TabsContent>
 
-        {/* Generated Images Tab */}
         <TabsContent value="generatedImages">
-          <Card>
-            <CardContent className="space-y-4 pt-4">
-              <ScrollArea className="h-[300px]">
-                {currentStory.generatedImages.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {currentStory.generatedImages.map((imageUrl, index) => (
-                      <div
-                        key={index}
-                        className="rounded-md overflow-hidden shadow-lg"
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={`Generated Image ${index + 1}`}
-                          className="w-full h-auto"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">No images generated yet!</p>
-                )}
-              </ScrollArea>
-              <Button
-                onClick={generateVideo}
-                disabled={loading || currentStory.generatedImages.length === 0}
-                className="w-full"
-              >
-                {loading ? "Generating..." : "Generate Video"}
-              </Button>
-            </CardContent>
-          </Card>
+          <GeneratedImagesTab
+            generatedImages={currentStory.generatedImages}
+            loading={loading}
+            onGenerateVideo={generateVideo}
+          />
         </TabsContent>
 
-        {/* Generated Video Tab */}
         <TabsContent value="generatedVideo">
-          <Card>
-            <CardContent className="space-y-4 pt-4">
-              {currentStory.generatedVideo &&
-              currentStory.generatedVideo.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {" "}
-                  {/* Use grid with 2 columns */}
-                  {currentStory.generatedVideo
-                    .split(", ")
-                    .map((videoUrl, index) => (
-                      <video
-                        key={index}
-                        controls
-                        src={videoUrl}
-                        className="w-full h-48 rounded-md"
-                      />
-                    ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">No video generated yet!</p>
-              )}
-            </CardContent>
-          </Card>
+          <GeneratedVideoTab generatedVideo={currentStory.generatedVideo} />
         </TabsContent>
       </Tabs>
     </div>
