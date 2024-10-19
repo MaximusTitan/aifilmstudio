@@ -31,6 +31,7 @@ export function StoryGeneratorComponent() {
   const [activeTab, setActiveTab] = useState("prompt");
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
+  const [story, setStory] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const handleError = (message: string) => {
@@ -277,6 +278,12 @@ export function StoryGeneratorComponent() {
             story={currentStory.story}
             loading={loading}
             onGenerateScreenplay={generateScreenplay}
+            onStoryChange={(newStory) => {
+              setCurrentStory((prev) => ({
+                ...prev,
+                story: newStory,
+              }));
+            }}
           />
         </TabsContent>
 
@@ -285,6 +292,12 @@ export function StoryGeneratorComponent() {
             screenplay={currentStory.screenplay}
             loading={loading}
             onGenerateImagePrompts={generateImagePrompts}
+            onScreenplayChange={(newScreenplay) => {
+              setCurrentStory((prev) => ({
+                ...prev,
+                screenplay: newScreenplay,
+              }));
+            }}
           />
         </TabsContent>
 
@@ -293,6 +306,12 @@ export function StoryGeneratorComponent() {
             imagePrompts={currentStory.imagePrompts}
             loading={loading}
             onGenerateImages={generateImages}
+            onImagePromptsChange={(newPrompts) => {
+              setCurrentStory((prev) => ({
+                ...prev,
+                imagePrompts: newPrompts,
+              }));
+            }}
           />
         </TabsContent>
 
