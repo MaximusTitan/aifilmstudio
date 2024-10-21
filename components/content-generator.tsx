@@ -215,6 +215,7 @@ export default function ContentGenerator() {
             latestGeneration={latestGeneration}
             handleDownload={handleDownload}
             handleRegenerate={handleRegenerate}
+            updateSelectedImage={updateSelectedImage}
           />
         )}
       </div>

@@ -1,6 +1,6 @@
 // LatestGeneration.tsx
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, Image, Video } from "lucide-react";
 
 type LatestGenerationProps = {
   latestGeneration: {
@@ -12,12 +12,14 @@ type LatestGenerationProps = {
   };
   handleDownload: (url: string, filename: string) => void;
   handleRegenerate: () => void;
+  updateSelectedImage: (url: string) => void; // <-- Add this prop
 };
 
 export default function LatestGeneration({
   latestGeneration,
   handleDownload,
   handleRegenerate,
+  updateSelectedImage, // <-- Destructure the prop
 }: LatestGenerationProps) {
   return (
     <div className="flex-1">
@@ -30,13 +32,8 @@ export default function LatestGeneration({
             className="rounded-lg shadow-lg"
           />
         )}
-        {latestGeneration.type === "video" && (
-          <video controls className="rounded-lg shadow-lg">
-            <source src={latestGeneration.url} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        )}
-        {latestGeneration.type === "image-to-video" && (
+        {(latestGeneration.type === "video" ||
+          latestGeneration.type === "image-to-video") && (
           <video controls className="rounded-lg shadow-lg">
             <source src={latestGeneration.url} type="video/mp4" />
             Your browser does not support the video tag.
@@ -45,7 +42,7 @@ export default function LatestGeneration({
       </div>
       <p className="text-sm mt-2">Prompt: {latestGeneration.prompt}</p>
 
-      <div className="mt-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         <Button
           onClick={() =>
             handleDownload(
@@ -59,10 +56,23 @@ export default function LatestGeneration({
           <Download className="mr-2 h-4 w-4" />
           Download
         </Button>
+
         <Button onClick={handleRegenerate} variant={"outline"}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Regenerate
         </Button>
+
+        {latestGeneration.type === "image" && ( // Add the Image-to-Video button conditionally
+          <Button
+            onClick={() => updateSelectedImage(latestGeneration.url)}
+            variant={"outline"}
+            size="sm"
+          >
+            <Image className="mr-2 h-4 w-4" />
+            to
+            <Video className="ml-2 h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );
