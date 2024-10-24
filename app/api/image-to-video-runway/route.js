@@ -4,19 +4,20 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request) {
   try {
-    // Parse the request JSON
     const { prompt, imageUrl } = await request.json();
 
-    // Initialize Supabase client
     const supabase = createClient();
 
-    // Authenticate user
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
+      console.error(
+        "User authentication failed:",
+        userError?.message || "No user found"
+      );
       return NextResponse.json(
         {
           message: "User not authenticated",
@@ -29,32 +30,25 @@ export async function POST(request) {
     const userId = user.id;
     const userEmail = user.email;
 
-    // Validate input parameters
     if (!prompt || !imageUrl) {
+      console.error("Validation error: Prompt and image URL are required.");
       return NextResponse.json(
         { message: "Prompt and image URL are required" },
         { status: 400 }
       );
     }
 
-    // Initialize RunwayML client
-    const client = new RunwayML({
-      apiKey: process.env.RUNWAYML_API_SECRET,
-    });
+    const client = new RunwayML({ apiKey: process.env.RUNWAYML_API_SECRET });
 
-    // Define parameters for video generation
     const params = {
       model: "gen3a_turbo",
       promptImage: imageUrl,
       promptText: prompt,
       duration: 5,
-      watermark: false, // Optional
-      ratio: "16:9", // Optional
+      watermark: false,
+      ratio: "16:9",
     };
 
-    console.log("Request Parameters:", params);
-
-    // Start video generation
     const imageToVideo = await client.imageToVideo
       .create(params)
       .catch((err) => {
@@ -72,17 +66,15 @@ export async function POST(request) {
 
     const taskId = imageToVideo.id;
 
-    // Poll for task completion
     const pollInterval = 5000;
-    let taskStatus;
-    let taskResponse;
+    let taskStatus, taskResponse;
 
     do {
       taskResponse = await client.tasks.retrieve(taskId);
       taskStatus = taskResponse.status;
 
       if (taskStatus === "THROTTLED") {
-        console.log("Task is throttled. Retrying...");
+        console.log("Task is throttled. Retrying in 5 seconds...");
         await new Promise((resolve) => setTimeout(resolve, pollInterval));
       } else if (taskStatus === "RUNNING") {
         console.log(
@@ -106,20 +98,17 @@ export async function POST(request) {
 
     const videoUrl = taskResponse.output[0];
 
-    // Step to upload video to Supabase bucket
-    const videoFileName = `generated_video_${userId}_${Date.now()}.mp4`;
     const response = await fetch(videoUrl);
     const videoBlob = await response.blob();
 
-    // Upload video to Supabase storage
-    const { error: uploadError } = await supabase.storage
+    const videoFileName = `generated_video_${userId}_${Date.now()}.mp4`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from("generated-videos")
-      .upload(videoFileName, videoBlob, {
-        cacheControl: "3600",
-        upsert: true,
-      });
+      .upload(videoFileName, videoBlob, { cacheControl: "3600", upsert: true });
 
     if (uploadError) {
+      console.error("Error uploading video to Supabase:", uploadError.message);
       return NextResponse.json(
         {
           message: "Error uploading video to Supabase",
@@ -129,7 +118,10 @@ export async function POST(request) {
       );
     }
 
-    // Fetch user video credits
+    const publicUrl = supabase.storage
+      .from("generated-videos")
+      .getPublicUrl(videoFileName).data.publicUrl;
+
     const { data: userData, error: userCreditsError } = await supabase
       .from("users")
       .select("video_credits")
@@ -137,6 +129,10 @@ export async function POST(request) {
       .single();
 
     if (userCreditsError || !userData) {
+      console.error(
+        "Error fetching user data:",
+        userCreditsError?.message || "No user data found"
+      );
       return NextResponse.json(
         {
           message: "Error fetching user data",
@@ -149,40 +145,40 @@ export async function POST(request) {
     const userVideoCredits = userData.video_credits;
     const creditsUsed = 5;
 
-    // Check for sufficient video credits
     if (userVideoCredits < creditsUsed) {
+      console.warn("Not enough video credits.");
       return NextResponse.json(
         { message: "Not enough video credits" },
         { status: 403 }
       );
     }
 
-    // Deduct video credits from user
     const { error: deductError } = await supabase
       .from("users")
       .update({ video_credits: userVideoCredits - creditsUsed })
       .eq("id", userId);
 
     if (deductError) {
+      console.error("Error updating video credits:", deductError.message);
       return NextResponse.json(
         { message: "Error updating video credits", error: deductError.message },
         { status: 500 }
       );
     }
 
-    // Save generation record in the database
     const { error: insertError } = await supabase.from("generations").insert([
       {
         user_id: userId,
         type: "video",
         user_email: userEmail,
         parameters: { prompt, imageUrl },
-        result_path: videoUrl, // You can store the new Supabase path if desired
+        result_path: publicUrl, // Save Supabase path
         credits_used: creditsUsed,
       },
     ]);
 
     if (insertError) {
+      console.error("Error saving generation record:", insertError.message);
       return NextResponse.json(
         {
           message: "Error saving generation record",
@@ -192,8 +188,7 @@ export async function POST(request) {
       );
     }
 
-    // Return the URL of the generated video
-    return NextResponse.json({ videoUrl });
+    return NextResponse.json({ videoUrl: publicUrl });
   } catch (error) {
     console.error("Error generating or fetching video:", error);
     return NextResponse.json(
