@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import axios from "axios";
+import { createClient } from "@/utils/supabase/client";
 import { PromptTab } from "./PromptTab";
 import { StoryTab } from "./StoryTab";
 import { ScreenplayTab } from "./ScreenplayTab";
 import { ImagePromptsTab } from "./ImagePromptsTab";
 import { GeneratedImagesTab } from "./GeneratedImagesTab";
 import { GeneratedVideoTab } from "./GeneratedVideoTab";
+
+// Initialize Supabase client
+const supabase = createClient();
 
 type Story = {
   prompt: string;
@@ -31,8 +35,24 @@ export function StoryGeneratorComponent() {
   const [activeTab, setActiveTab] = useState("prompt");
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [story, setStory] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch authenticated user's email on component mount
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error("Error fetching user:", error.message);
+        setError("Failed to fetch user information.");
+      }
+    };
+
+    fetchUserEmail();
+  }, []);
 
   const handleError = (message: string) => {
     setError(message);
