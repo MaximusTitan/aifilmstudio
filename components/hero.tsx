@@ -18,12 +18,12 @@ export default function Header() {
           <LumaLogo />
         </a>
       </div>
-      <h1 className="sr-only">AI Film Studio</h1>
+      <h1 className="sr-only">iGen Studio</h1>
       <div className="text-md lg:text-3xl !leading-tight mx-auto max-w-xl text-center">
         Generate Images and Videos with
         <br />
         AI in seconds using
-        <p className="font-bold">AI Film Studio</p>
+        <p className="font-bold">iGen Studio</p>
       </div>
       <div />
     </div>

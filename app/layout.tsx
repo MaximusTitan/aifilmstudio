@@ -15,9 +15,9 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "AI Film Studio",
+  title: "iGen Studio",
   description:
-    "Generate Images and Videos with AI in seconds using AI Film Studio",
+    "Generate Images and Videos with AI in seconds using iGen Studio",
 };
 
 export default function RootLayout({
@@ -40,8 +40,8 @@ export default function RootLayout({
                 <div className="flex gap-5 items-center font-semibold">
                   <Link href={"/"} className="text-2xl">
                     <Image
-                      src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/ai-film-studio.png"
-                      alt="AI Film Studio"
+                      src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/igenstudio.png"
+                      alt="iGen Studio"
                       width={100}
                       height={100}
                     />
