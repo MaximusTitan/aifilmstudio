@@ -35,16 +35,23 @@ export default function ContentGenerator() {
     const fetchGenerations = async () => {
       try {
         const response = await axios.get("/api/get-generations");
-        const fetchedGenerations = response.data.generations.map(
-          (gen: any) => ({
+        const fetchedGenerations = response.data.generations
+          .map((gen: any) => ({
             id: gen.id,
             type: gen.type,
             url: gen.result_path,
             prompt: gen.parameters.prompt,
             created_at: gen.created_at,
-          })
-        );
-        setGenerations(fetchedGenerations.reverse());
+          }))
+          .sort(
+            (
+              a: { created_at: string | number | Date },
+              b: { created_at: string | number | Date }
+            ) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          );
+        setGenerations(fetchedGenerations);
       } catch (err) {
         console.error("Failed to load past generations", err);
       }
