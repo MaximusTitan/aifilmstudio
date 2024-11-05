@@ -27,6 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>
+      <head><script defer data-website-id="6729bf97c08ff2d51e8608d6" data-domain="app.igen.studio" src="https://datafa.st/js/script.js"></script></head>
       <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
