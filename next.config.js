@@ -42,6 +42,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "storage.cdn-luma.com",
       },
+      {
+        protocol: "https",
+        hostname: "utfs.io",
+      },
     ],
   },
   reactStrictMode: true,

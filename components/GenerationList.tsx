@@ -36,7 +36,10 @@ export default function GenerationList({
           <h2 className="text-2xl font-semibold mb-4">Your Generations</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {generations.map((gen) => (
-              <div key={gen.id} className="border rounded-lg p-4 shadow-md">
+              <div
+                key={gen.id}
+                className="border rounded-lg p-4 shadow-md bg-white"
+              >
                 <div className="relative">
                   {gen.type === "image" && (
                     <img
