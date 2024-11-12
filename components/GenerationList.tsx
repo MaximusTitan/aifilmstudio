@@ -32,6 +32,9 @@ export default function GenerationList({
 }: GenerationListProps) {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(
+    new Set()
+  );
   const itemsPerPage = 6; // Show 6 items per page (2 rows x 3 columns)
 
   const handleFullscreen = (url: string) => {
@@ -112,6 +115,16 @@ export default function GenerationList({
     }
 
     return items;
+  };
+
+  const togglePrompt = (id: string) => {
+    const newExpanded = new Set(expandedPrompts);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedPrompts(newExpanded);
   };
 
   return (
@@ -197,7 +210,32 @@ export default function GenerationList({
                   )}
                 </div>
 
-                <p className="text-sm mt-2">Prompt: {gen.prompt}</p>
+                <p className="text-sm mt-2">
+                  Prompt:{" "}
+                  {gen.prompt.length > 100 && !expandedPrompts.has(gen.id) ? (
+                    <>
+                      {gen.prompt.slice(0, 100)}...{" "}
+                      <button
+                        onClick={() => togglePrompt(gen.id)}
+                        className="text-neutral-500 hover:text-neutral-700 font-bold"
+                      >
+                        more
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {gen.prompt}{" "}
+                      {gen.prompt.length > 100 && (
+                        <button
+                          onClick={() => togglePrompt(gen.id)}
+                          className="text-neutral-500 hover:text-neutral-700 font-bold"
+                        >
+                          less
+                        </button>
+                      )}
+                    </>
+                  )}
+                </p>
                 <p className="mt-2 text-xs text-gray-400">
                   {new Date(gen.created_at ?? "").toLocaleString()}
                 </p>
