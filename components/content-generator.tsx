@@ -184,19 +184,7 @@ export default function ContentGenerator() {
   };
 
   return (
-    <div className="space-y-4 bg-gradient-to-r from-rose-100/50 to-rose-200/50 p-6">
-      {" "}
-      <div className="fixed inset-0 -z-10">
-        <div
-          className="w-full h-full"
-          style={{
-            backgroundImage: `url('https://utfs.io/f/IhxAe7gvxiO0lsMnElUjN4VWhcL2Qq1BiRpS3afdH5IJsKxO')`,
-            backgroundRepeat: "repeat",
-            backgroundSize: "1920px 1080px", // Adjust size as needed
-            opacity: 0.3,
-          }}
-        />
-      </div>
+    <div className="space-y-4 max-w-4xl">
       <h1 className="text-3xl font-semibold">Content Generator</h1>
       <div className="flex gap-8">
         <div className="flex-1 min-w-96">
