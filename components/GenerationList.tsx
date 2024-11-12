@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Download, Image, Video, Maximize2, X } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 type GenerationListProps = {
   generations: Array<{
@@ -20,6 +31,8 @@ export default function GenerationList({
   handleDownload,
 }: GenerationListProps) {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6; // Show 6 items per page (2 rows x 3 columns)
 
   const handleFullscreen = (url: string) => {
     setFullscreenImage(url);
@@ -29,17 +42,100 @@ export default function GenerationList({
     setFullscreenImage(null);
   };
 
+  // Calculate pagination values
+  const totalPages = Math.ceil(generations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = generations.slice(startIndex, endIndex);
+
+  // Handle page navigation
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Add first page if not in range
+    if (startPage > 1) {
+      items.push(
+        <PaginationItem key="1">
+          <PaginationLink onClick={() => goToPage(1)}>1</PaginationLink>
+        </PaginationItem>
+      );
+      if (startPage > 2) {
+        items.push(
+          <PaginationItem key="start-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+    }
+
+    // Add pages in range
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            onClick={() => goToPage(i)}
+            isActive={currentPage === i}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    // Add last page if not in range
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        items.push(
+          <PaginationItem key="end-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink onClick={() => goToPage(totalPages)}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    return items;
+  };
+
   return (
     <div className="relative">
       {generations.length > 0 && (
         <>
-          <h2 className="text-2xl font-semibold mb-4">Your Generations</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">Your Generations</h2>
+            <p className="text-sm text-gray-500">
+              Showing {startIndex + 1}-{Math.min(endIndex, generations.length)}{" "}
+              of {generations.length} items
+            </p>
+          </div>
+          <Alert className="mb-6">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Please note: Generations are automatically deleted after 7 days.
+              Download your favorites to keep them permanently.
+            </AlertDescription>
+          </Alert>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {generations.map((gen) => (
-              <div
-                key={gen.id}
-                className="border rounded-lg p-4 shadow-md bg-white"
-              >
+            {currentItems.map((gen) => (
+              <div key={gen.id} className="border rounded-lg p-4 shadow-md">
                 <div className="relative">
                   {gen.type === "image" && (
                     <img
@@ -107,6 +203,37 @@ export default function GenerationList({
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => goToPage(currentPage - 1)}
+                    className={
+                      currentPage === 1
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+
+                {renderPaginationItems()}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => goToPage(currentPage + 1)}
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
 
           {fullscreenImage && (
