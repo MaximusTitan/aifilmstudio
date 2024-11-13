@@ -59,7 +59,11 @@ const GenerateImageFal = ({
           </Select>
         </div>
 
-        <Button type="submit" disabled={loading} className="w-full">
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-auto px-4 py-2 text-sm min-w-48"
+        >
           {loading ? "Generating..." : "Generate Image"}
         </Button>
       </form>

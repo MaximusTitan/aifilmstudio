@@ -27,7 +27,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>
-      <head><script defer data-website-id="6729bf97c08ff2d51e8608d6" data-domain="app.igen.studio" src="https://datafa.st/js/script.js"></script></head>
+      <head>
+        <script
+          defer
+          data-website-id="6729bf97c08ff2d51e8608d6"
+          data-domain="app.igen.studio"
+          src="https://datafa.st/js/script.js"
+        ></script>
+      </head>
       <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
@@ -41,10 +48,10 @@ export default function RootLayout({
                 <div className="flex gap-5 items-center font-semibold">
                   <Link href={"/"} className="text-2xl">
                     <Image
-                      src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/igenstudio.png"
-                      alt="iGen Studio"
-                      width={100}
-                      height={100}
+                      src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/clipsa.png"
+                      alt="Clipsa"
+                      width={110}
+                      height={110}
                     />
                   </Link>
                 </div>
@@ -60,12 +67,12 @@ export default function RootLayout({
                 <p>
                   Powered by{" "}
                   <a
-                    href="https://www.igebra.ai/"
+                    href="https://ischoolofai.com/"
                     target="_blank"
-                    className="font-bold hover:underline"
+                    className="font-bold hover:underline text-rose-500"
                     rel="noreferrer"
                   >
-                    {"{igebra.ai}"}
+                    {"iSchool of AI"}
                   </a>
                 </p>
                 <ThemeSwitcher />

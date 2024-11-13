@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import { Textarea } from "./ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -18,11 +18,12 @@ export function PromptTab({
   return (
     <Card>
       <CardContent className="space-y-4 pt-4">
-        <Input
+        <Textarea
           placeholder="Enter your story prompt..."
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
           disabled={loading}
+          className="min-h-32"
         />
         <Button onClick={onGenerate} className="w-full" disabled={loading}>
           {loading ? "Generating..." : "Generate Story"}
