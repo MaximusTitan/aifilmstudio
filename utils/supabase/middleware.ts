@@ -70,7 +70,7 @@ export const updateSession = async (request: NextRequest) => {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
 
-      if (request.nextUrl.pathname.startsWith("/dashboard")) {
+      if (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/story")) {
         if (!userData.verified) {
           return NextResponse.redirect(new URL("/not-verified", request.url));
         }

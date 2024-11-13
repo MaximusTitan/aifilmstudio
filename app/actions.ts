@@ -53,6 +53,34 @@ export const signUpAction = async (formData: FormData) => {
     return { error: "Email and password are required" };
   }
 
+  // First check if user exists
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select()
+    .eq('email', email)
+    .single();
+
+  if (existingUser) {
+    // If user exists, resend verification email
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${origin}/auth/callback`,
+      },
+    });
+
+    if (resendError) {
+      return encodedRedirect("error", "/sign-up", resendError.message);
+    }
+
+    return encodedRedirect(
+      "success",
+      "/sign-up",
+      "Verification email has been resent. Please check your inbox."
+    );
+  }
+
   let imageCredits = 15;
   let videoCredits = 15;
 
@@ -73,6 +101,10 @@ export const signUpAction = async (formData: FormData) => {
   });
 
   if (signupError) {
+    // Handle specific error cases
+    if (signupError.message.includes('unique constraint')) {
+      return encodedRedirect("error", "/sign-up", "This email is already registered. Please check your email for the verification link or try signing in.");
+    }
     console.error(signupError.code + " " + signupError.message);
     return encodedRedirect("error", "/sign-up", signupError.message);
   }
