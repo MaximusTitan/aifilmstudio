@@ -5,7 +5,7 @@ export default function ChallengePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-rose-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-rose-400 via-rose-500 to-orange-400 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-br from-rose-500 via-rose-600 to-orange-500 text-white relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
           {/* Decorative elements */}

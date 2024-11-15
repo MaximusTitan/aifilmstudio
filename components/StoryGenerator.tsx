@@ -10,6 +10,7 @@ import { ScreenplayTab } from "./ScreenplayTab";
 import { ImagePromptsTab } from "./ImagePromptsTab";
 import { GeneratedImagesTab } from "./GeneratedImagesTab";
 import { GeneratedVideoTab } from "./GeneratedVideoTab";
+import { ExportVideoTab } from "./ExportVideoTab";
 
 // Initialize Supabase client
 const supabase = createClient();
@@ -275,13 +276,14 @@ export function StoryGeneratorComponent() {
       {error && <div className="mb-4 text-red-500">{error}</div>}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="prompt">Prompt</TabsTrigger>
           <TabsTrigger value="story">Story</TabsTrigger>
           <TabsTrigger value="screenplay">Screenplay</TabsTrigger>
           <TabsTrigger value="imagePrompts">Image Prompts</TabsTrigger>
           <TabsTrigger value="generatedImages">Generated Images</TabsTrigger>
           <TabsTrigger value="generatedVideo">Generated Video</TabsTrigger>
+          <TabsTrigger value="exportVideo">Export Video</TabsTrigger>
         </TabsList>
 
         <TabsContent value="prompt">
@@ -344,7 +346,16 @@ export function StoryGeneratorComponent() {
         </TabsContent>
 
         <TabsContent value="generatedVideo">
-          <GeneratedVideoTab generatedVideo={currentStory.generatedVideo} />
+          <GeneratedVideoTab
+            generatedVideo={currentStory.generatedVideo}
+            onExport={() => setActiveTab("exportVideo")}
+          />
+        </TabsContent>
+
+        <TabsContent value="exportVideo">
+          <ExportVideoTab
+            videoUrls={currentStory.generatedVideo?.split(", ") || []}
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -107,11 +107,7 @@ export default async function AuthButton() {
             >
               {" "}
               <Avatar className="h-8 w-8">
-                <AvatarImage
-                  src="/placeholder.svg?height=32&width=32"
-                  alt={user.email || ""}
-                  className="rounded-full"
-                />
+                <AvatarImage alt={user.email || ""} className="rounded-full" />
                 <AvatarFallback>
                   {user.email ? user.email.charAt(0).toUpperCase() : "U"}
                 </AvatarFallback>
