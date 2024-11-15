@@ -38,7 +38,7 @@ export default function RootLayout({
       <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
@@ -48,8 +48,8 @@ export default function RootLayout({
                 <div className="flex gap-5 items-center font-semibold">
                   <Link href={"/"} className="text-2xl">
                     <Image
-                      src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/clipsa.png"
-                      alt="Clipsa"
+                      src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/ai-film-studio.png"
+                      alt="AI Film Studio"
                       width={110}
                       height={110}
                     />
@@ -64,17 +64,21 @@ export default function RootLayout({
               </div>
 
               <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-                <p>
-                  Powered by{" "}
+                <div className="flex flex-col items-center gap-4">
+                  <p>Learn more About Making Films with Generative AI </p>
                   <a
-                    href="https://ischoolofai.com/"
+                    href="https://www.ischoolofai.com/the-genai-master"
                     target="_blank"
-                    className="font-bold hover:underline text-rose-500"
                     rel="noreferrer"
                   >
-                    {"iSchool of AI"}
+                    <Image
+                      src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/isa.webp"
+                      alt="iSchool of AI"
+                      width={150}
+                      height={50}
+                    />
                   </a>
-                </p>
+                </div>
                 <ThemeSwitcher />
               </footer>
             </div>

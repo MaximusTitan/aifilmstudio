@@ -29,6 +29,13 @@ interface User {
   created_at: string;
 }
 
+interface Generation {
+  id: string;
+  user_id: string;
+  credits_used: number;
+  type: "image" | "video";
+}
+
 interface UsersTableProps {
   users: User[];
   searchQuery: string;
@@ -52,12 +59,66 @@ export function UsersTable({
     [key: string]: { image_credits_used: number; video_credits_used: number };
   }>({});
 
+  // Fetch generations and calculate consumed credits
+  useEffect(() => {
+    const fetchGenerations = async () => {
+      const { data: generations, error } = await supabase
+        .from("generations")
+        .select("*");
+
+      if (error) {
+        console.error("Error fetching generations:", error);
+        return;
+      }
+
+      const consumedCredits = (generations as Generation[]).reduce(
+        (acc, gen) => {
+          const userId = gen.user_id;
+          if (!acc[userId]) {
+            acc[userId] = { image_credits_used: 0, video_credits_used: 0 };
+          }
+          if (gen.type === "image") {
+            acc[userId].image_credits_used += gen.credits_used;
+          } else if (gen.type === "video") {
+            acc[userId].video_credits_used += gen.credits_used;
+          }
+          return acc;
+        },
+        {} as {
+          [key: string]: {
+            image_credits_used: number;
+            video_credits_used: number;
+          };
+        }
+      );
+
+      setUserConsumedCredits(consumedCredits);
+    };
+
+    fetchGenerations();
+  }, [supabase]);
+
   useEffect(() => {
     const filtered = users.filter((user) =>
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredUsers(filtered);
     setCurrentPage(1);
+
+    // Initialize credit inputs for all users
+    const initialCredits = users.reduce(
+      (acc, user) => {
+        acc[user.id] = {
+          image_credits: 0,
+          video_credits: 0,
+        };
+        return acc;
+      },
+      {} as {
+        [key: string]: { image_credits: number; video_credits: number };
+      }
+    );
+    setCreditInputs(initialCredits);
   }, [searchQuery, users]);
 
   const toggleVerified = async (userId: string, isVerified: boolean) => {
@@ -98,6 +159,16 @@ export function UsersTable({
             : user
         )
       );
+
+      // Reset the credit input after successful update
+      setCreditInputs((prev) => ({
+        ...prev,
+        [userId]: {
+          ...prev[userId],
+          [creditType === "image_credits" ? "image_credits" : "video_credits"]:
+            0,
+        },
+      }));
     }
   };
 
@@ -109,7 +180,6 @@ export function UsersTable({
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-  // Table JSX implementation...
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto -mx-2 md:mx-0">
@@ -232,6 +302,9 @@ export function UsersTable({
                       <Button
                         onClick={() => toggleVerified(user.id, user.verified)}
                         size="sm"
+                        className={
+                          user.verified ? "" : "bg-black hover:bg-black/90"
+                        }
                       >
                         {user.verified ? "Unverify" : "Verify"}
                       </Button>
@@ -239,7 +312,7 @@ export function UsersTable({
                   </TableRow>
                 )
             )}
-          </TableBody>{" "}
+          </TableBody>
         </Table>
       </div>
       <Pagination>
