@@ -88,10 +88,8 @@ export default function ChallengePage() {
                 📝
               </div>
               <div className="ml-4">
-                <p className="font-bold text-lg sm:text-xl">
-                  Last Day to Enter
-                </p>
-                <p className="text-gray-600">November 24, 2024</p>
+                <p className="text-base">Last Day to Enter</p>
+                <p className="font-bold text-neutral-800">November 24, 2024</p>
               </div>
             </div>
             <div className="flex items-center bg-orange-50 p-4 rounded-xl">
@@ -99,10 +97,8 @@ export default function ChallengePage() {
                 🎉
               </div>
               <div className="ml-4">
-                <p className="font-bold text-lg sm:text-xl">
-                  Winner Announcement
-                </p>
-                <p className="text-gray-600">November 24, 2024</p>
+                <p className="text-base">Winner Announcement</p>
+                <p className="font-bold text-neutral-800">November 24, 2024</p>
               </div>
             </div>
             <div className="flex items-center bg-orange-50 p-4 rounded-xl">
@@ -110,8 +106,8 @@ export default function ChallengePage() {
                 💰
               </div>
               <div className="ml-4">
-                <p className="font-bold text-lg sm:text-xl">Prize Money</p>
-                <p className="text-gray-600">$100 Cash Prize!</p>
+                <p className="text-base">Prize Money</p>
+                <p className="font-bold text-neutral-800">$100 Cash Prize!</p>
               </div>
             </div>
           </div>
@@ -123,7 +119,7 @@ export default function ChallengePage() {
             🚀 Your Adventure Map 🗺️
           </h2>
           <div className="space-y-6 sm:space-y-8">
-            {[...Array(15)].map((_, i) => (
+            {[...Array(13)].map((_, i) => (
               <div key={i} className="flex group">
                 <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-rose-400 text-white rounded-full flex items-center justify-center font-bold text-lg sm:text-xl group-hover:scale-110 transition-transform">
                   {i + 1}
@@ -131,69 +127,54 @@ export default function ChallengePage() {
                 <div className="ml-4 bg-orange-50 p-4 rounded-xl flex-grow group-hover:-rotate-1 transition-transform">
                   {i === 0 && (
                     <p className="text-base sm:text-lg">
-                      🌐 Visit{" "}
-                      <Link
-                        href="https://app.aifilmstudio.co"
-                        className="text-rose-500 hover:underline"
-                      >
-                        AI Film Studio
-                      </Link>{" "}
-                      or scan the QR code
+                      📖 Click on "Story" at the top
                     </p>
                   )}
                   {i === 1 && (
                     <p className="text-base sm:text-lg">
-                      ✉️ Sign-up and confirm your email
+                      ✨ Write your amazing story and click "Generate"
                     </p>
                   )}
                   {i === 2 && (
                     <p className="text-base sm:text-lg">
-                      📖 Click on "Story" at the top
+                      📝 Make your story perfect and create the screenplay
                     </p>
                   )}
                   {i === 3 && (
                     <p className="text-base sm:text-lg">
-                      ✨ Write your amazing story and click "Generate"
+                      🎬 Review the screenplay and make image prompts
                     </p>
                   )}
                   {i === 4 && (
                     <p className="text-base sm:text-lg">
-                      📝 Make your story perfect and create the screenplay
+                      🎨 Create your magical images
                     </p>
                   )}
                   {i === 5 && (
                     <p className="text-base sm:text-lg">
-                      🎬 Review the screenplay and make image prompts
+                      🎥 Turn your images into videos
                     </p>
                   )}
                   {i === 6 && (
                     <p className="text-base sm:text-lg">
-                      🎨 Create your magical images
-                    </p>
-                  )}
-                  {i === 7 && (
-                    <p className="text-base sm:text-lg">
-                      🎥 Turn your images into videos
-                    </p>
-                  )}
-                  {i === 8 && (
-                    <p className="text-base sm:text-lg">
                       💾 Save your awesome videos
                     </p>
                   )}
-                  {i === 9 && (
+                  {i === 7 && (
                     <p className="text-base sm:text-lg">
                       🎵 Go to{" "}
                       <Link
                         href="https://clipchamp.com"
                         className="text-rose-500 hover:underline"
+                        rel="noopener noreferrer"
+                        target="_blank"
                       >
                         Clipchamp
                       </Link>{" "}
                       to add music and effects
                     </p>
                   )}
-                  {i === 10 && (
+                  {i === 8 && (
                     <div className="text-base sm:text-lg">
                       <p>📱 Share your video everywhere!</p>
                       <div className="flex flex-wrap gap-2 sm:gap-4 mt-2">
@@ -209,28 +190,38 @@ export default function ChallengePage() {
                       </div>
                     </div>
                   )}
-                  {i === 11 && (
+                  {i === 9 && (
                     <p className="text-base sm:text-lg">
                       📮 Submit your entry at{" "}
                       <Link
                         href="https://ischoolofai.com/tgais-wats"
                         className="text-rose-500 hover:underline"
+                        rel="noopener noreferrer"
+                        target="_blank"
                       >
                         iSchool of AI
                       </Link>
                     </p>
                   )}
-                  {i === 12 && (
+                  {i === 10 && (
                     <p className="text-base sm:text-lg">
-                      🎓 Join a demo of The GenAI Master Course
+                      🎓 Join a demo of{" "}
+                      <Link
+                        href="https://www.ischoolofai.com/the-genai-master"
+                        className="text-rose-500 hover:underline"
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        The GenAI Master Course
+                      </Link>
                     </p>
                   )}
-                  {i === 13 && (
+                  {i === 11 && (
                     <p className="text-base sm:text-lg">
                       👀 Our team will pick the winner
                     </p>
                   )}
-                  {i === 14 && (
+                  {i === 12 && (
                     <p className="text-base sm:text-lg">
                       🎁 Winner gets the $100 prize!
                     </p>

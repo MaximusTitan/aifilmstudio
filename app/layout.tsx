@@ -42,8 +42,8 @@ export default function RootLayout({
                     <Image
                       src="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/ai-film-studio.png"
                       alt="AI Film Studio"
-                      width={110}
-                      height={110}
+                      width={90}
+                      height={90}
                     />
                   </Link>
                 </div>
