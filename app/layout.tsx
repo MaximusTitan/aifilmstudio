@@ -15,9 +15,9 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "iGen Studio",
+  title: "AI Film Studio",
   description:
-    "Generate Images and Videos with AI in seconds using iGen Studio",
+    "Generate Images and Videos with AI in seconds using AI Film Studio",
 };
 
 export default function RootLayout({
@@ -27,14 +27,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>
-      <head>
-        <script
-          defer
-          data-website-id="6729bf97c08ff2d51e8608d6"
-          data-domain="app.igen.studio"
-          src="https://datafa.st/js/script.js"
-        ></script>
-      </head>
       <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"

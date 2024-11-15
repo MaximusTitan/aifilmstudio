@@ -46,6 +46,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "utfs.io",
       },
+      {
+        protocol: "https",
+        hostname: "runway-static-assets.s3.amazonaws.com",
+      },
     ],
   },
   reactStrictMode: true,

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
-export default function LumaLogo() {
+export default function RunwayLogo() {
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
 
@@ -18,8 +18,8 @@ export default function LumaLogo() {
 
   const logoSrc =
     theme === "dark"
-      ? "https://cdn-luma.com/public/lumalabs.ai/media-kit/10.svg"
-      : "https://cdn-luma.com/public/lumalabs.ai/media-kit/11.svg";
+      ? "https://runway-static-assets.s3.amazonaws.com/site/images/api-page/powered-by-runway-white.png"
+      : "https://runway-static-assets.s3.amazonaws.com/site/images/api-page/powered-by-runway-black.png";
 
-  return <Image src={logoSrc} alt="Luma Logo" width={80} height={60} />;
+  return <Image src={logoSrc} alt="Runway Logo" width={120} height={90} />;
 }
