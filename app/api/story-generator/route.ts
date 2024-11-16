@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request: Request) {
-
   const supabase = createClient();
 
-  const { prompt, type } = await request.json();
+  const { prompt, type, story } = await request.json();
   const {
     data: { user },
     error: userError,
@@ -31,68 +30,34 @@ export async function POST(request: Request) {
   let model = "gpt-4o";
   let systemMessage = "You are a creative assistant skilled in generating content.";
   let searchPrompt = prompt;
-
-  // Find the original entry based on type
-  if (type === "screenplay") {
-    systemMessage = "You are a screenwriter who converts stories into well-structured screenplays.";
-    // For screenplay, search using the story content
-    const { data: storyData, error: storyError } = await supabase
-      .from("story_generations")
-      .select("*")
-      .eq("user_email", userEmail)
-      .eq("story", prompt)
-      .single();
-
-    if (storyError) {
-      console.error("Error finding original story:", storyError.message);
-      return NextResponse.json(
-        { message: "Original story not found", error: storyError.message },
-        { status: 404 }
-      );
-    }
-    
-    searchPrompt = storyData.prompt;
-  } else if (type === "imagePrompts") {
-    systemMessage = "You are an expert in generating concise and realistic cinematic image prompts. Generate a minimum of 5 image prompts and limit each prompt to under 400 characters. All the prompts should be realistic and cinematic.";
-    // For image prompts, search using the screenplay content
-    const { data: screenplayData, error: screenplayError } = await supabase
-      .from("story_generations")
-      .select("*")
-      .eq("user_email", userEmail)
-      .eq("screenplay", prompt)
-      .single();
-
-    if (screenplayError) {
-      console.error("Error finding original screenplay:", screenplayError.message);
-      return NextResponse.json(
-        { message: "Original screenplay not found", error: screenplayError.message },
-        { status: 404 }
-      );
-    }
-    
-    searchPrompt = screenplayData.prompt;
-  }
-
   let messages = [
     { role: "system", content: systemMessage },
     { role: "user", content: prompt },
   ];
 
-  if (type === "screenplay") {
+  if (type === "imagePrompts") {
+    systemMessage = "You are an expert in generating concise and realistic cinematic image prompts. Generate a minimum of 6 image prompts and limit each prompt to under 400 characters. All the prompts should be realistic and cinematic.";
+    
+    if (!story) {
+      console.error("No story provided for image prompts");
+      return NextResponse.json(
+        { 
+          message: "No story provided for image prompts", 
+          debug: { userEmail, prompt } 
+        },
+        { status: 400 }
+      );
+    }
+    
+    searchPrompt = story;
     messages = [
       { role: "system", content: systemMessage },
-      { role: "user", content: `Please convert this story to a screenplay: ${prompt}` },
-    ];
-  } else if (type === "imagePrompts") {
-    messages = [
-      { role: "system", content: systemMessage },
-      { role: "user", content: `Please generate very short image prompts under 400 characters based on the following screenplay: ${prompt}. 
-              Ensure the prompts are realistic, cinematic, and describe characters in detail. Maintain consistency in each prompt. Do not include numbers or titles for the prompts, just send me the prompts. Generate a minimum of 5 prompts.` },
+      { role: "user", content: `Please generate very short image prompts under 400 characters based on the following story: ${searchPrompt}. 
+Ensure the prompts are realistic, cinematic, and describe characters in detail. Maintain consistency in each prompt. Do not include numbers or titles for the prompts, just send me the prompts. Generate a minimum of 6 prompts.` },
     ];
   }
 
   try {
-    
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -107,69 +72,62 @@ export async function POST(request: Request) {
     });
 
     const data = await response.json();
-
     const result = data.choices?.[0]?.message?.content?.trim();
+    
     if (!result) {
       console.error("No valid response from OpenAI.");
       throw new Error("Response failed. No valid response from OpenAI.");
     }
 
-    // Find existing entry using the searchPrompt
-    const { data: existingData, error: fetchError } = await supabase
-      .from("story_generations")
-      .select("*")
-      .eq("user_email", userEmail)
-      .eq("prompt", searchPrompt)
-      .single();
-
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error("Error fetching existing entry:", fetchError.message);
-      throw new Error("Failed to fetch existing story generation.");
-    }
-
-    if (existingData) {
-      // Update existing entry
-      const updateData: any = {};
-      
-      // Only update the relevant field based on type
-      if (type === "story") {
-        updateData.story = result;
-      } else if (type === "screenplay") {
-        updateData.screenplay = result;
-      } else if (type === "imagePrompts") {
-        updateData.image_prompts = result.split('\n').filter((line: string) => line.trim() !== '');
-      }
-
-      const { error: updateError } = await supabase
-        .from("story_generations")
-        .update(updateData)
-        .eq("id", existingData.id);
-
-      if (updateError) {
-        console.error("Error updating database:", updateError.message);
-        throw new Error("Failed to update generated content in database.");
-      }
-    } else if (type === "story") {
-      // Only create new entry for initial story creation
+    if (type === "story") {
+      // Create new entry for story
       const { error: insertError } = await supabase
         .from("story_generations")
         .insert([{
           user_email: userEmail,
           prompt: prompt,
           story: result,
-          screenplay: null,
-          image_prompts: null,
+          image_prompts: [],
+          fullprompt: prompt,
         }]);
 
       if (insertError) {
         console.error("Error saving to database:", insertError.message);
         throw new Error("Failed to save generated content to database.");
       }
-    } else {
-      return NextResponse.json(
-        { message: "Original entry not found" },
-        { status: 404 }
-      );
+    } else if (type === "imagePrompts") {
+      // For image prompts, find and update the existing story
+      const { data: existingStory, error: fetchError } = await supabase
+        .from("story_generations")
+        .select("*")
+        .eq("user_email", userEmail)
+        .eq("story", story)  // Match by the actual story content
+        .single();
+
+      if (fetchError) {
+        console.error("Error fetching story:", fetchError.message);
+        throw new Error("Failed to find existing story.");
+      }
+
+      if (!existingStory) {
+        return NextResponse.json(
+          { message: "Original story not found", debug: { userEmail, story: story.substring(0, 100) + "..." } },
+          { status: 404 }
+        );
+      }
+
+      // Update with image prompts
+      const { error: updateError } = await supabase
+        .from("story_generations")
+        .update({
+          image_prompts: result.split('\n').filter((line: string) => line.trim() !== '')
+        })
+        .eq("id", existingStory.id);
+
+      if (updateError) {
+        console.error("Error updating image prompts:", updateError.message);
+        throw new Error("Failed to update image prompts.");
+      }
     }
 
     return NextResponse.json({ result }, { status: 200 });

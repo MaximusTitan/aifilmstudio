@@ -19,12 +19,14 @@ export function ImagePromptsTab({
   onImagePromptsChange,
 }: ImagePromptsTabProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editedPrompts, setEditedPrompts] = useState(imagePrompts);
+  const [editedPrompts, setEditedPrompts] = useState<string[]>(
+    imagePrompts || []
+  ); // Initialize with empty array if undefined
   const [textareaHeights, setTextareaHeights] = useState<number[]>([]);
   const paragraphRefs = useRef<(HTMLParagraphElement | null)[]>([]);
 
   useEffect(() => {
-    setEditedPrompts(imagePrompts);
+    setEditedPrompts(imagePrompts || []); // Ensure editedPrompts is always an array
   }, [imagePrompts]);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export function ImagePromptsTab({
     <Card>
       <CardContent className="space-y-4 pt-4">
         <ScrollArea className="h-[300px]">
-          {editedPrompts.length > 0 ? (
+          {editedPrompts.length > 0 ? ( // editedPrompts is guaranteed to be an array
             editedPrompts.map((prompt, index) => (
               <div key={index} className="mb-4 relative">
                 <h3 className="font-bold">Scene {index + 1}</h3>

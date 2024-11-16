@@ -6,30 +6,31 @@ import axios from "axios";
 import { createClient } from "@/utils/supabase/client";
 import { PromptTab } from "./PromptTab";
 import { StoryTab } from "./StoryTab";
-import { ScreenplayTab } from "./ScreenplayTab";
 import { ImagePromptsTab } from "./ImagePromptsTab";
 import { GeneratedImagesTab } from "./GeneratedImagesTab";
 import { GeneratedVideoTab } from "./GeneratedVideoTab";
 import { ExportVideoTab } from "./ExportVideoTab";
+import { AudioTab } from "./AudioTab"; // Add this import
 
 // Initialize Supabase client
 const supabase = createClient();
 
 type Story = {
-  prompt: string;
+  originalPrompt: string; // Existing field
+  fullprompt: string; // Changed from `fullPrompt` to `fullprompt`
   story: string;
-  screenplay: string;
   imagePrompts: string[];
   generatedImages: string[];
   generatedVideo?: string;
+  narrationAudio?: string;
 };
 
 export function StoryGeneratorComponent() {
   const [stories, setStories] = useState<Story[]>([]);
   const [currentStory, setCurrentStory] = useState<Story>({
-    prompt: "",
+    originalPrompt: "", // Existing field
+    fullprompt: "", // Changed from `fullPrompt` to `fullprompt`
     story: "",
-    screenplay: "",
     imagePrompts: [],
     generatedImages: [],
   });
@@ -37,6 +38,7 @@ export function StoryGeneratorComponent() {
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [mergedVideoUrl, setMergedVideoUrl] = useState<string | null>(null); // Add state for merged video
 
   // Fetch authenticated user's email on component mount
   useEffect(() => {
@@ -67,7 +69,7 @@ export function StoryGeneratorComponent() {
     setLoading(true);
     setError(null); // Reset error state
     try {
-      const fullPrompt = `Write a captivating story based on the following idea: ${prompt}. 
+      const fullPrompt = `Write a small and captivating story which can be told in around 30 seconds based on the following idea: ${prompt}. 
                           Provide the story in a narrative format, ensuring the story and characters are cinematic and immersive.`;
 
       const response = await fetch("/api/story-generator", {
@@ -75,7 +77,7 @@ export function StoryGeneratorComponent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: fullPrompt,
-          type: "story",
+          type: "story", // Ensure type is correctly set
         }),
       });
 
@@ -87,7 +89,8 @@ export function StoryGeneratorComponent() {
 
       const newStory = {
         ...currentStory,
-        prompt,
+        originalPrompt: prompt, // Set originalPrompt
+        fullprompt: fullPrompt, // Changed from `fullPrompt` to `fullprompt`
         story: data.result,
       };
 
@@ -103,8 +106,8 @@ export function StoryGeneratorComponent() {
     }
   };
 
-  // Generate screenplay
-  const generateScreenplay = async () => {
+  // Generate image prompts
+  const generateImagePrompts = async () => {
     if (!currentStory.story) return;
 
     setLoading(true);
@@ -114,48 +117,22 @@ export function StoryGeneratorComponent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: currentStory.story,
-          type: "screenplay",
-        }),
-      });
-
-      const data = await response.json();
-
-      setCurrentStory((prev) => ({
-        ...prev,
-        screenplay: data.result,
-      }));
-      setActiveTab("screenplay");
-    } catch (error) {
-      handleError(
-        "An error occurred while generating the screenplay. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Generate image prompts
-  const generateImagePrompts = async () => {
-    if (!currentStory.screenplay) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/story-generator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: currentStory.screenplay,
+          prompt: prompt, // Use the original prompt
+          story: currentStory.story, // Pass the current story
           type: "imagePrompts",
         }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate image prompts.");
+      }
 
+      const data = await response.json();
+      // Convert the string response into an array by splitting on newlines
       const imagePrompts = data.result
         .split("\n")
-        .filter((prompt: string) => prompt.trim() !== "");
+        .filter((line: string) => line.trim() !== "");
 
       setCurrentStory((prev) => ({
         ...prev,
@@ -269,6 +246,64 @@ export function StoryGeneratorComponent() {
     }
   };
 
+  // Add generateAudio function with error handling
+  const generateAudio = async () => {
+    if (!currentStory.story)
+      return handleError("No story available to generate audio.");
+
+    setLoading(true);
+    setError(null);
+    try {
+      // Generate narration script using ChatGPT
+      const response = await fetch("/api/generate-narration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          story: currentStory.story,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Failed to generate narration script."
+        );
+      }
+
+      const data = await response.json();
+      const narrationScript = data.script;
+
+      // Send script to generate-audio API
+      const audioResponse = await fetch("/api/generate-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: narrationScript }),
+      });
+
+      if (!audioResponse.ok) {
+        const errorData = await audioResponse.json();
+        throw new Error(errorData.error || "Failed to generate audio.");
+      }
+
+      const audioBlob = await audioResponse.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      setCurrentStory((prev) => ({
+        ...prev,
+        narrationAudio: audioUrl,
+      }));
+      setActiveTab("audio");
+    } catch (error) {
+      handleError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while generating audio. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Story Generator</h1>
@@ -279,7 +314,7 @@ export function StoryGeneratorComponent() {
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="prompt">Prompt</TabsTrigger>
           <TabsTrigger value="story">Story</TabsTrigger>
-          <TabsTrigger value="screenplay">Screenplay</TabsTrigger>
+          <TabsTrigger value="audio">Audio</TabsTrigger>
           <TabsTrigger value="imagePrompts">Image Prompts</TabsTrigger>
           <TabsTrigger value="generatedImages">Generated Images</TabsTrigger>
           <TabsTrigger value="generatedVideo">Generated Video</TabsTrigger>
@@ -299,27 +334,13 @@ export function StoryGeneratorComponent() {
           <StoryTab
             story={currentStory.story}
             loading={loading}
-            onGenerateScreenplay={generateScreenplay}
             onStoryChange={(newStory) => {
               setCurrentStory((prev) => ({
                 ...prev,
                 story: newStory,
               }));
             }}
-          />
-        </TabsContent>
-
-        <TabsContent value="screenplay">
-          <ScreenplayTab
-            screenplay={currentStory.screenplay}
-            loading={loading}
-            onGenerateImagePrompts={generateImagePrompts}
-            onScreenplayChange={(newScreenplay) => {
-              setCurrentStory((prev) => ({
-                ...prev,
-                screenplay: newScreenplay,
-              }));
-            }}
+            onGenerateAudio={generateAudio} // Pass generateAudio instead
           />
         </TabsContent>
 
@@ -348,13 +369,34 @@ export function StoryGeneratorComponent() {
         <TabsContent value="generatedVideo">
           <GeneratedVideoTab
             generatedVideo={currentStory.generatedVideo}
+            mergedVideoUrl={mergedVideoUrl || undefined} // Pass mergedVideoUrl
             onExport={() => setActiveTab("exportVideo")}
+          />
+        </TabsContent>
+
+        <TabsContent value="audio">
+          <AudioTab
+            narrationAudio={currentStory.narrationAudio}
+            loading={loading}
+            onGenerateAudio={generateAudio}
+            onGoToImagePrompts={generateImagePrompts} // Pass generateImagePrompts
           />
         </TabsContent>
 
         <TabsContent value="exportVideo">
           <ExportVideoTab
             videoUrls={currentStory.generatedVideo?.split(", ") || []}
+            narrationAudio={currentStory.narrationAudio} // Ensure it's passed
+            onMergeComplete={(url: string) => {
+              setMergedVideoUrl(url); // Update merged video URL
+              setCurrentStory((prev: Story) => ({
+                ...prev,
+                generatedVideo: prev.generatedVideo
+                  ? `${prev.generatedVideo}, ${url}`
+                  : url,
+              }));
+              setActiveTab("generatedVideo"); // Switch to Generated Video tab
+            }}
           />
         </TabsContent>
       </Tabs>

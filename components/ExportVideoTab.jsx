@@ -7,7 +7,11 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Upload } from "lucide-react";
 
-export function ExportVideoTab({ videoUrls }) {
+export function ExportVideoTab({
+  videoUrls,
+  narrationAudio, // Receive narrationAudio
+  onMergeComplete, // Receive callback
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [downloadLink, setDownloadLink] = useState(null);
@@ -45,6 +49,12 @@ export function ExportVideoTab({ videoUrls }) {
       return;
     }
 
+    if (!narrationAudio) {
+      // Check narrationAudio
+      setError("No narration audio available to merge.");
+      return;
+    }
+
     setIsLoading(true);
     setProgress(0);
     setError(null);
@@ -70,6 +80,15 @@ export function ExportVideoTab({ videoUrls }) {
         ffmpeg.FS("writeFile", `video${index}.mp4`, file);
       });
 
+      // Write the narration audio to FFmpeg's file system
+      const audioResponse = await fetch(narrationAudio);
+      const audioBlob = await audioResponse.blob();
+      const audioFile = new File([audioBlob], `narration.mp3`, {
+        type: "audio/mpeg",
+      });
+      const audioData = await fetchFile(audioFile);
+      ffmpeg.FS("writeFile", "narration.mp3", audioData);
+
       // Create filelist for concatenation
       const fileList = downloadedVideos
         .map((_, index) => `file 'video${index}.mp4'`)
@@ -94,11 +113,30 @@ export function ExportVideoTab({ videoUrls }) {
         "output.mp4"
       );
 
-      // Read the output file and create download link
-      const data = ffmpeg.FS("readFile", "output.mp4");
+      // Merge audio with the concatenated video
+      await ffmpeg.run(
+        "-i",
+        "output.mp4",
+        "-i",
+        "narration.mp3",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-strict",
+        "experimental",
+        "final_output.mp4"
+      );
+
+      // Read the final output file and create download link
+      const data = ffmpeg.FS("readFile", "final_output.mp4");
       const videoBlob = new Blob([data.buffer], { type: "video/mp4" });
-      const videoUrl = URL.createObjectURL(videoBlob);
-      setDownloadLink(videoUrl);
+      const mergedVideoUrl = URL.createObjectURL(videoBlob);
+      setDownloadLink(mergedVideoUrl);
+
+      if (onMergeComplete) {
+        onMergeComplete(mergedVideoUrl); // Notify parent component
+      }
     } catch (error) {
       console.error("Error processing videos:", error);
       setError("Failed to process videos. Please try again.");

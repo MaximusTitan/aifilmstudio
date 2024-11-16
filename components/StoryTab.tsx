@@ -8,14 +8,14 @@ import { Pencil, Save } from "lucide-react";
 type StoryTabProps = {
   story: string;
   loading: boolean;
-  onGenerateScreenplay: () => void;
+  onGenerateAudio?: () => void; // Add onGenerateAudio prop
   onStoryChange?: (newStory: string) => void;
 };
 
 export function StoryTab({
   story,
   loading,
-  onGenerateScreenplay,
+  onGenerateAudio, // Add this
   onStoryChange,
 }: StoryTabProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -70,11 +70,12 @@ export function StoryTab({
           )}
         </div>
         <Button
-          onClick={onGenerateScreenplay}
+          onClick={onGenerateAudio} // Update to trigger audio generation
           disabled={loading || !editedStory}
           className="w-full"
         >
-          {loading ? "Generating..." : "Generate Screenplay"}
+          {loading ? "Generating..." : "Generate Audio"}{" "}
+          {/* Update button label */}
         </Button>
       </CardContent>
     </Card>
