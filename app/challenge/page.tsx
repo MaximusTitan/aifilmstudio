@@ -63,7 +63,7 @@ export default function ChallengePage() {
             <h3 className="font-bold text-rose-500 mb-2 text-lg sm:text-xl">
               Video Length
             </h3>
-            <p className="text-gray-700">30 Seconds of Awesome!</p>
+            <p className="text-gray-700">30 Seconds of Awesome Creation!</p>
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 transform hover:-rotate-2 transition-transform">
             <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">🎮</div>
@@ -109,7 +109,7 @@ export default function ChallengePage() {
               </div>
               <div className="ml-4">
                 <p className="text-base">Prize Money</p>
-                <p className="font-bold text-neutral-800">$100 Cash Prize!</p>
+                <p className="font-bold text-neutral-800">$100 Gift Coupon!</p>
               </div>
             </div>
           </div>
@@ -121,7 +121,7 @@ export default function ChallengePage() {
             🚀 Your Adventure Map 🗺️
           </h2>
           <div className="space-y-6 sm:space-y-8">
-            {[...Array(13)].map((_, i) => (
+            {[...Array(14)].map((_, i) => (
               <div key={i} className="flex group">
                 <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-rose-400 text-white rounded-full flex items-center justify-center font-bold text-lg sm:text-xl group-hover:scale-110 transition-transform">
                   {i + 1}
@@ -139,12 +139,12 @@ export default function ChallengePage() {
                   )}
                   {i === 2 && (
                     <p className="text-base sm:text-lg">
-                      📝 Make your story perfect and create the screenplay
+                      🎤 Get audio narration of your story
                     </p>
                   )}
                   {i === 3 && (
                     <p className="text-base sm:text-lg">
-                      🎬 Review the screenplay and make image prompts
+                      🎬 Review the generated content and make image prompts
                     </p>
                   )}
                   {i === 4 && (
@@ -154,15 +154,28 @@ export default function ChallengePage() {
                   )}
                   {i === 5 && (
                     <p className="text-base sm:text-lg">
-                      🎥 Turn your images into videos
+                      📽️ Turn your images into videos
                     </p>
                   )}
                   {i === 6 && (
                     <p className="text-base sm:text-lg">
-                      💾 Save your awesome videos
+                      💾 Export and download your awesome videos
                     </p>
                   )}
                   {i === 7 && (
+                    <p className="text-base sm:text-lg">
+                      🖥️ Add the watermark to your video using this logo:{" "}
+                      <Link
+                        href="https://wdfrtqeljulkoqnllxad.supabase.co/storage/v1/object/public/generated-images/ischool-of-ai-white.png"
+                        className="text-rose-500 hover:underline"
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        Download Logo
+                      </Link>
+                    </p>
+                  )}
+                  {i === 8 && (
                     <p className="text-base sm:text-lg">
                       🎵 Go to{" "}
                       <Link
@@ -176,7 +189,7 @@ export default function ChallengePage() {
                       to add music and effects
                     </p>
                   )}
-                  {i === 8 && (
+                  {i === 9 && (
                     <div className="text-base sm:text-lg">
                       <p>📱 Share your video everywhere!</p>
                       <div className="flex flex-wrap gap-2 sm:gap-4 mt-2">
@@ -192,7 +205,7 @@ export default function ChallengePage() {
                       </div>
                     </div>
                   )}
-                  {i === 9 && (
+                  {i === 10 && (
                     <p className="text-base sm:text-lg">
                       📮 Submit your entry at{" "}
                       <Link
@@ -205,7 +218,52 @@ export default function ChallengePage() {
                       </Link>
                     </p>
                   )}
-                  {i === 10 && (
+                  {i === 11 && (
+                    <p className="text-base sm:text-lg">
+                      📝 Note: When submitting, please tag us on social media:
+                      <br />
+                      Instagram:{" "}
+                      <Link
+                        href="https://www.instagram.com/ischoolofai/"
+                        className="text-rose-500 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        @ischoolofai
+                      </Link>
+                      <br />
+                      Facebook:{" "}
+                      <Link
+                        href="https://www.facebook.com/ischoolofai/"
+                        className="text-rose-500 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        @iSchoolofAI
+                      </Link>
+                      <br />
+                      YouTube:{" "}
+                      <Link
+                        href="https://www.youtube.com/@ischoolofai"
+                        className="text-rose-500 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        @ischoolofai
+                      </Link>
+                      <br />
+                      LinkedIn:{" "}
+                      <Link
+                        href="https://www.linkedin.com/company/ischoolofai"
+                        className="text-rose-500 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        iSchool of AI
+                      </Link>
+                    </p>
+                  )}
+                  {i === 12 && (
                     <p className="text-base sm:text-lg">
                       🎓 Join a demo of{" "}
                       <Link
@@ -218,12 +276,12 @@ export default function ChallengePage() {
                       </Link>
                     </p>
                   )}
-                  {i === 11 && (
+                  {i === 13 && (
                     <p className="text-base sm:text-lg">
                       👀 Our team will pick the winner
                     </p>
                   )}
-                  {i === 12 && (
+                  {i === 14 && (
                     <p className="text-base sm:text-lg">
                       🎁 Winner gets the $100 prize!
                     </p>
@@ -231,6 +289,46 @@ export default function ChallengePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Social Media Channels */}
+      <div className="bg-white py-6">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl font-bold text-rose-500 mb-4">
+            Follow Us on Social Media
+          </h2>
+          <div className="flex justify-center space-x-6">
+            <Link
+              href="https://www.youtube.com/@ischoolofai"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="text-3xl">📺</span>
+            </Link>
+            <Link
+              href="https://www.instagram.com/ischoolofai/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="text-3xl">📸</span>
+            </Link>
+            <Link
+              href="https://www.facebook.com/ischoolofai/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="text-3xl">👥</span>
+            </Link>
+            <Link
+              href="https://www.linkedin.com/company/ischoolofai"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="text-3xl">💼</span>
+            </Link>
+            {/* Add more channels if needed */}
           </div>
         </div>
       </div>

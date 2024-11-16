@@ -1,3 +1,4 @@
+import React, { useState } from "react"; // Add useState import
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -14,6 +15,14 @@ export function AudioTab({
   onGenerateAudio,
   onGoToImagePrompts, // Destructure the required prop
 }: AudioTabProps) {
+  const [imagePromptsLoading, setImagePromptsLoading] = useState(false); // New state
+
+  const handleGenerateImagePrompts = async () => {
+    setImagePromptsLoading(true);
+    await onGoToImagePrompts();
+    setImagePromptsLoading(false);
+  };
+
   return (
     <Card>
       <CardContent className="space-y-4 pt-4">
@@ -22,16 +31,22 @@ export function AudioTab({
             <div className="rounded-lg overflow-hidden border">
               <audio src={narrationAudio} controls className="w-full" />
             </div>
-            <Button onClick={onGenerateAudio} className="w-full">
-              Regenerate Audio
-            </Button>
-            <Button
-              onClick={onGoToImagePrompts} // Update handler to trigger API call
-              className="w-full mt-2"
+            {/* <Button
+              onClick={onGenerateAudio}
+              className="w-full"
               variant="secondary"
             >
-              Generate Image Prompts {/* Rename button */}
-            </Button>
+              Regenerate Audio
+            </Button> */}
+            <div className="flex justify-end">
+              <Button
+                onClick={handleGenerateImagePrompts} // Update handler
+                className="mt-2"
+                disabled={imagePromptsLoading}
+              >
+                {imagePromptsLoading ? "Loading..." : "Generate Image Prompts"}
+              </Button>
+            </div>
           </>
         ) : (
           <>

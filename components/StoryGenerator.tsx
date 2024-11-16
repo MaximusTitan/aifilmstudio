@@ -389,17 +389,18 @@ export function StoryGeneratorComponent() {
             narrationAudio={currentStory.narrationAudio} // Ensure it's passed
             onMergeComplete={(url: string) => {
               setMergedVideoUrl(url); // Update merged video URL
-              setCurrentStory((prev: Story) => ({
-                ...prev,
-                generatedVideo: prev.generatedVideo
-                  ? `${prev.generatedVideo}, ${url}`
-                  : url,
-              }));
-              setActiveTab("generatedVideo"); // Switch to Generated Video tab
+              setActiveTab("exportVideo"); // Switch to Export Video tab
             }}
           />
         </TabsContent>
       </Tabs>
+      <div className="mt-4 mb-4 p-4 bg-yellow-100/25 border-l-4 border-yellow-200 text-yellow-700">
+        <p className="font-semibold">Important Note:</p>
+        <p>
+          You have limited credits for generating content. Please review each
+          step carefully before proceeding to ensure optimal use of resources.
+        </p>
+      </div>
     </div>
   );
 }

@@ -25,9 +25,11 @@ export function PromptTab({
           disabled={loading}
           className="min-h-32"
         />
-        <Button onClick={onGenerate} className="w-full" disabled={loading}>
-          {loading ? "Generating..." : "Generate Story"}
-        </Button>
+        <div className="flex justify-end">
+          <Button onClick={onGenerate} className="w-auto" disabled={loading}>
+            {loading ? "Generating..." : "Generate Story"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

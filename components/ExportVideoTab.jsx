@@ -151,38 +151,48 @@ export function ExportVideoTab({
       <CardContent className="space-y-4 pt-4">
         {videoUrls.length > 0 ? (
           <>
-            <Button
-              onClick={handleExport}
-              disabled={isLoading || !isFFmpegLoaded}
-              className="w-full gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Upload className="h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  Merge Videos
-                </>
-              )}
-            </Button>
-
+            {!downloadLink && (
+              <div className="flex justify-end space-x-2">
+                <Button
+                  onClick={handleExport}
+                  disabled={isLoading || !isFFmpegLoaded}
+                  className="w-auto gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Upload className="h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      Merge Videos
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
             {downloadLink && (
               <>
-                <div className="mt-4 rounded-lg overflow-hidden border">
-                  <video
-                    src={downloadLink}
-                    controls
-                    className="w-full aspect-video"
-                  />
+                <div className="mt-4 flex justify-center">
+                  <div
+                    style={{ width: "640px", height: "360px" }}
+                    className="rounded-lg overflow-hidden border"
+                  >
+                    <video
+                      src={downloadLink}
+                      controls
+                      style={{ width: "100%", height: "100%" }}
+                    />
+                  </div>
                 </div>
-                <Button asChild className="w-full">
-                  <a href={downloadLink} download="final-video.mp4">
-                    Download Video
-                  </a>
-                </Button>
+                <div className="flex justify-end mt-2">
+                  <Button asChild>
+                    <a href={downloadLink} download="final-video.mp4">
+                      Download Video
+                    </a>
+                  </Button>
+                </div>
               </>
             )}
           </>

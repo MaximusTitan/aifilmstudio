@@ -36,13 +36,15 @@ export function GeneratedImagesTab({
             <p className="text-gray-500">No images generated yet!</p>
           )}
         </ScrollArea>
-        <Button
-          onClick={onGenerateVideo}
-          disabled={loading || generatedImages.length === 0}
-          className="w-full"
-        >
-          {loading ? "Generating..." : "Generate Video"}
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            onClick={onGenerateVideo}
+            disabled={loading || generatedImages.length === 0}
+            className="w-auto"
+          >
+            {loading ? "Generating..." : "Generate Video"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

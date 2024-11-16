@@ -35,8 +35,11 @@ export function StoryTab({
   return (
     <Card>
       <CardContent className="space-y-4 pt-4">
+        {isEditing && (
+          <h2 className="font-mono font-semibold underline mb-2">Edit Story</h2>
+        )}
         <div className="relative">
-          <ScrollArea className="h-[300px]">
+          <ScrollArea className="max-h-[400px]">
             {editedStory ? (
               <Textarea
                 value={editedStory}
@@ -48,11 +51,12 @@ export function StoryTab({
               <p className="text-gray-500">Story not generated yet!</p>
             )}
           </ScrollArea>
+        </div>
+        <div className="flex justify-end space-x-2">
           {editedStory && (
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-2 top-2"
               onClick={() => {
                 if (isEditing) {
                   handleSave();
@@ -68,15 +72,14 @@ export function StoryTab({
               )}
             </Button>
           )}
+          <Button
+            onClick={onGenerateAudio} // Update to trigger audio generation
+            disabled={loading || !editedStory}
+            className="w-auto"
+          >
+            {loading ? "Generating..." : "Generate Audio"}{" "}
+          </Button>
         </div>
-        <Button
-          onClick={onGenerateAudio} // Update to trigger audio generation
-          disabled={loading || !editedStory}
-          className="w-full"
-        >
-          {loading ? "Generating..." : "Generate Audio"}{" "}
-          {/* Update button label */}
-        </Button>
       </CardContent>
     </Card>
   );

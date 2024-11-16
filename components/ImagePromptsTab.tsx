@@ -52,7 +52,14 @@ export function ImagePromptsTab({
           {editedPrompts.length > 0 ? ( // editedPrompts is guaranteed to be an array
             editedPrompts.map((prompt, index) => (
               <div key={index} className="mb-4 relative">
-                <h3 className="font-bold">Scene {index + 1}</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold">Scene {index + 1}</h3>
+                  {editingIndex === index && (
+                    <h4 className="font-mono font-semibold underline">
+                      Edit Mode
+                    </h4>
+                  )}
+                </div>
                 {editingIndex === index ? (
                   <div className="relative">
                     <Textarea
@@ -103,13 +110,15 @@ export function ImagePromptsTab({
             <p className="text-gray-500">No image prompts generated yet!</p>
           )}
         </ScrollArea>
-        <Button
-          onClick={onGenerateImages}
-          disabled={loading || editedPrompts.length === 0}
-          className="w-full"
-        >
-          {loading ? "Generating..." : "Generate Images"}
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            onClick={onGenerateImages}
+            disabled={loading || editedPrompts.length === 0}
+            className="w-auto"
+          >
+            {loading ? "Generating..." : "Generate Images"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

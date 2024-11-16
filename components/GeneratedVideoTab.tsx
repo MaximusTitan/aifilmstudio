@@ -28,17 +28,22 @@ export const GeneratedVideoTab: React.FC<GeneratedVideoTabProps> = ({
                   className="w-full h-48 rounded-md"
                 />
               ))}
-              {mergedVideoUrl && ( // Display merged video
+              {/* 
+              Removed mergedVideoUrl display
+              {mergedVideoUrl && (
                 <video
                   controls
                   src={mergedVideoUrl}
                   className="w-full h-48 rounded-md"
                 />
               )}
+              */}
             </div>
-            <Button onClick={onExport} className="w-full">
-              Export Video
-            </Button>
+            <div className="flex justify-end">
+              <Button onClick={onExport} className="w-auto">
+                Export Video
+              </Button>
+            </div>
           </>
         ) : (
           <p className="text-gray-500">No video generated yet!</p>
