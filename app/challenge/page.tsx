@@ -70,7 +70,9 @@ export default function ChallengePage() {
             <h3 className="font-bold text-rose-500 mb-2 text-lg sm:text-xl">
               Cool Tool
             </h3>
-            <p className="text-gray-700">Clipsa (15 Free Videos!)</p>
+            <p className="text-gray-700">
+              AI Film Studio (25 Free Video Credits!)
+            </p>
           </div>
         </div>
 

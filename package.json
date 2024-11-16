@@ -6,6 +6,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@11labs/client": "^0.0.2",
     "@fal-ai/serverless-client": "^0.14.3",
     "@ffmpeg/core": "0.8.5",
     "@ffmpeg/ffmpeg": "0.9.7",

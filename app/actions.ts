@@ -81,15 +81,15 @@ export const signUpAction = async (formData: FormData) => {
     );
   }
 
-  let imageCredits = 15;
-  let videoCredits = 15;
+  let imageCredits = 25;
+  let videoCredits = 25;
 
   const allowedDomains = ["igebra.ai", "prosoftpeople.com"];
   const emailDomain = email.split("@")[1];
 
   if (allowedDomains.includes(emailDomain)) {
-    imageCredits = 499;
-    videoCredits = 500;
+    imageCredits = 50;
+    videoCredits = 50;
   }
 
   const { data: authData, error: signupError } = await supabase.auth.signUp({
