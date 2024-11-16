@@ -71,7 +71,7 @@ export default function ChallengePage() {
               Cool Tool
             </h3>
             <p className="text-gray-700">
-              AI Film Studio (25 Free Video Credits!)
+              AI Film Studio (12 Free Video Credits!)
             </p>
           </div>
         </div>

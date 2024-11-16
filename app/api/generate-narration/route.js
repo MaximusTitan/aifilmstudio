@@ -21,7 +21,7 @@ export async function POST(request) {
           {
             role: "system",
             content:
-              "Generate a very short narration script which can be told in around 30 seconds based on the following story.",
+              "Generate a very short narration script based on the following story. The script should be 550 characters",
           },
           {
             role: "user",

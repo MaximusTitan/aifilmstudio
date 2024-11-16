@@ -69,8 +69,8 @@ export function StoryGeneratorComponent() {
     setLoading(true);
     setError(null); // Reset error state
     try {
-      const fullPrompt = `Write a small and captivating story which can be told in around 30 seconds based on the following idea: ${prompt}. 
-                          Provide the story in a narrative format, ensuring the story and characters are cinematic and immersive.`;
+      const fullPrompt = `Write a small and captivating story based on the following idea: ${prompt}. 
+                          Provide the story in a narrative format, ensuring the story and characters are cinematic and immersive. It should be 550 characters.`;
 
       const response = await fetch("/api/story-generator", {
         method: "POST",
