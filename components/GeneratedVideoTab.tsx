@@ -1,15 +1,19 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-type GeneratedVideoTabProps = {
+interface GeneratedVideoTabProps {
   generatedVideo?: string;
+  narrationAudio?: string;
   onExport?: () => void;
-};
+  mergedVideoUrl?: string; // Ensure this prop is present
+}
 
-export function GeneratedVideoTab({
+export const GeneratedVideoTab: React.FC<GeneratedVideoTabProps> = ({
   generatedVideo,
+  narrationAudio, // Receive narrationAudio
   onExport,
-}: GeneratedVideoTabProps) {
+  mergedVideoUrl, // Receive mergedVideoUrl
+}) => {
   return (
     <Card>
       <CardContent className="space-y-4 pt-4">
@@ -24,8 +28,15 @@ export function GeneratedVideoTab({
                   className="w-full h-48 rounded-md"
                 />
               ))}
+              {mergedVideoUrl && ( // Display merged video
+                <video
+                  controls
+                  src={mergedVideoUrl}
+                  className="w-full h-48 rounded-md"
+                />
+              )}
             </div>
-            <Button onClick={onExport} className="w-full mt-4">
+            <Button onClick={onExport} className="w-full">
               Export Video
             </Button>
           </>
@@ -35,4 +46,4 @@ export function GeneratedVideoTab({
       </CardContent>
     </Card>
   );
-}
+};
