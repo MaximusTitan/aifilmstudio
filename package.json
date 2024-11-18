@@ -40,7 +40,8 @@
     "razorpay": "^2.9.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "replicate": "^0.33.0"
+    "replicate": "^0.33.0",
+    "resend": "^4.0.1-alpha.0"
   },
   "devDependencies": {
     "@gradio/client": "^1.6.0-beta.2",
