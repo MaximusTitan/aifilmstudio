@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     await resend.emails.send({
-      from: 'AI Film Studio <notifications@aifilmstudio.com>',
+      from: 'AI Film Studio <crew@aifilmstudio.com>',
       to: NEXT_PUBLIC_ADMIN_EMAILS,
       subject: '🎬 New User Joined AI Film Studio',
       html: `
