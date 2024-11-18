@@ -7,15 +7,26 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Get admin emails from environment variable
 const NEXT_PUBLIC_ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').filter(Boolean) || [];
 
-// Types
+// Types for Supabase webhook payload
 interface UserRecord {
   id: string;
   email: string;
   created_at: string;
+  phone: string | null;
+  role: string;
+  is_anonymous: boolean;
+  raw_app_meta_data: {
+    provider: string;
+    providers: string[];
+  };
 }
 
-interface RequestPayload {
+interface WebhookPayload {
+  type: string;
+  table: string;
+  schema: string;
   record: UserRecord;
+  old_record: null;
 }
 
 // Validate email format
@@ -26,25 +37,41 @@ const isValidEmail = (email: string): boolean => {
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json() as RequestPayload;
-    const record = payload.record;
+    console.log('📥 Received webhook request');
+    
+    const payload = await request.json() as WebhookPayload;
+    console.log('📦 Webhook payload:', JSON.stringify(payload, null, 2));
 
-    // Validate payload
-    if (!record || !record.email || !record.created_at) {
+    // Validate webhook type
+    if (payload.type !== 'INSERT') {
+      console.log('❌ Invalid webhook type:', payload.type);
+      return NextResponse.json(
+        { error: 'Only INSERT webhooks are processed' },
+        { status: 400 }
+      );
+    }
+
+    // Validate payload structure
+    if (!payload.record || !payload.record.email || !payload.record.created_at) {
+      console.log('❌ Invalid payload structure:', payload);
       return NextResponse.json(
         { error: 'Invalid payload: missing required fields' },
         { status: 400 }
       );
     }
 
+    const record = payload.record;
+
     // Validate email format
     if (!isValidEmail(record.email)) {
+      console.log('❌ Invalid email format:', record.email);
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
       );
     }
 
+    // Format signup date
     const signupDate = new Date(record.created_at).toLocaleString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -57,12 +84,16 @@ export async function POST(request: NextRequest) {
 
     // Validate admin emails configuration
     if (NEXT_PUBLIC_ADMIN_EMAILS.length === 0) {
+      console.log('❌ No admin emails configured');
       return NextResponse.json(
         { error: 'No admin emails configured' },
         { status: 500 }
       );
     }
 
+    console.log('📧 Sending notification to:', NEXT_PUBLIC_ADMIN_EMAILS);
+
+    // Send email notification
     await resend.emails.send({
       from: 'AI Film Studio <crew@aifilmstudio.com>',
       to: NEXT_PUBLIC_ADMIN_EMAILS,
@@ -97,6 +128,30 @@ export async function POST(request: NextRequest) {
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #4a5568;">
+                    <strong>Auth Provider:</strong>
+                  </td>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #2d3748;">
+                    ${record.raw_app_meta_data.provider}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #4a5568;">
+                    <strong>Phone:</strong>
+                  </td>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #2d3748;">
+                    ${record.phone || 'Not provided'}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #4a5568;">
+                    <strong>Role:</strong>
+                  </td>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #2d3748;">
+                    ${record.role || 'Default'}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #4a5568;">
                     <strong>Signed Up:</strong>
                   </td>
                   <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #2d3748;">
@@ -114,13 +169,15 @@ export async function POST(request: NextRequest) {
       `
     });
 
+    console.log('✅ Notification sent successfully');
+
     return NextResponse.json({ 
       success: true,
       message: 'Notification sent successfully'
     });
 
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error('❌ Error processing request:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     const isValidationError = typeof errorMessage === 'string' && errorMessage.includes('Invalid');
