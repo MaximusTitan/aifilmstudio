@@ -35,6 +35,24 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+// Format date to IST
+const formatDateToIST = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Kolkata',
+    hour12: true,
+  };
+
+  const date = new Date(dateString);
+  const istDate = new Intl.DateTimeFormat('en-US', options).format(date);
+  return `${istDate} IST`;
+};
+
 export async function POST(request: NextRequest) {
   try {
     console.log('📥 Received webhook request');
@@ -71,16 +89,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Format signup date
-    const signupDate = new Date(record.created_at).toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short',
-    });
+    // Format signup date in IST
+    const signupDate = formatDateToIST(record.created_at);
 
     // Validate admin emails configuration
     if (NEXT_PUBLIC_ADMIN_EMAILS.length === 0) {
