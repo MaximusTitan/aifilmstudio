@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   ];
 
   if (type === "imagePrompts") {
-    systemMessage = "You are an expert in generating concise and realistic cinematic image prompts. Generate a minimum of 6 image prompts and limit each prompt to under 400 characters. All the prompts should be realistic and cinematic.";
+    systemMessage = "You are an expert in generating concise and realistic cinematic image prompts. Generate a minimum of 12 image prompts and limit each prompt to under 400 characters. All the prompts should be realistic and cinematic.";
     
     if (!story) {
       console.error("No story provided for image prompts");
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     messages = [
       { role: "system", content: systemMessage },
       { role: "user", content: `Please generate very short image prompts under 400 characters based on the following story: ${searchPrompt}. 
-Ensure the prompts are realistic, cinematic, and describe characters in detail. Maintain consistency in each prompt. Do not include numbers or titles for the prompts, just send me the prompts. Generate a minimum of 6 prompts.` },
+Ensure the prompts are realistic, cinematic, and describe characters in detail. Maintain consistency in each prompt. Do not include numbers or titles for the prompts, just send me the prompts. Generate a minimum of 12 prompts.` },
     ];
   }
 

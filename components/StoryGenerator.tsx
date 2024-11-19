@@ -70,7 +70,7 @@ export function StoryGeneratorComponent() {
     setError(null); // Reset error state
     try {
       const fullPrompt = `Write a small and captivating story based on the following idea: ${prompt}. 
-                          Provide the story in a narrative format, ensuring the story and characters are cinematic and immersive. It should be 550 characters.`;
+                          Provide the story in a narrative format, ensuring the story and characters are cinematic and immersive. It should be 1100 characters.`;
 
       const response = await fetch("/api/story-generator", {
         method: "POST",
