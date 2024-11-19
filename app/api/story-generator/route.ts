@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   ];
 
   if (type === "imagePrompts") {
-    systemMessage = "You are an expert in generating concise and realistic cinematic image prompts. Generate a minimum of 12 image prompts and limit each prompt to under 400 characters. All the prompts should be realistic and cinematic.";
+    systemMessage = "You are a master cinematographer and storyboard artist who excels at visual storytelling. Create cinematic image prompts that maintain perfect consistency in character appearances, lighting conditions, color palettes, and environmental details throughout the sequence. Each prompt should flow naturally into the next, as if crafting scenes for a high-end film production. Focus on photorealistic quality, precise camera angles, and emotional resonance while keeping descriptions under 400 characters.";
     
     if (!story) {
       console.error("No story provided for image prompts");
@@ -52,8 +52,7 @@ export async function POST(request: Request) {
     searchPrompt = story;
     messages = [
       { role: "system", content: systemMessage },
-      { role: "user", content: `Please generate very short image prompts under 400 characters based on the following story: ${searchPrompt}. 
-Ensure the prompts are realistic, cinematic, and describe characters in detail. Maintain consistency in each prompt. Do not include numbers or titles for the prompts, just send me the prompts. Generate a minimum of 12 prompts.` },
+      { role: "user", content: `Create a sequence of cinematic image prompts for this story: ${searchPrompt}. Each prompt must be under 400 characters and capture the scene in photorealistic detail. Include camera angles, lighting, character details, and environment specifications. Maintain strict visual consistency between prompts, especially in character appearances and lighting conditions. Generate at least 12 prompts that flow like consecutive movie scenes. Provide only the prompts, without numbers or titles.` },
     ];
   }
 

@@ -1,5 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { useState } from "react"; // Import useState
 
 interface GeneratedVideoTabProps {
   generatedVideo?: string;
@@ -17,27 +19,25 @@ export const GeneratedVideoTab: React.FC<GeneratedVideoTabProps> = ({
   return (
     <Card>
       <CardContent className="space-y-4 pt-4">
-        {generatedVideo && generatedVideo.length > 0 ? (
+        {generatedVideo === undefined || generatedVideo === null ? (
+          <Skeleton className="h-48 w-full" />
+        ) : (
           <>
             <div className="grid grid-cols-2 gap-4">
-              {generatedVideo.split(", ").map((videoUrl, index) => (
-                <video
-                  key={index}
-                  controls
-                  src={videoUrl}
-                  className="w-full h-48 rounded-md"
-                />
-              ))}
-              {/* 
-              Removed mergedVideoUrl display
-              {mergedVideoUrl && (
-                <video
-                  controls
-                  src={mergedVideoUrl}
-                  className="w-full h-48 rounded-md"
-                />
+              {generatedVideo && generatedVideo.length > 0 ? (
+                generatedVideo
+                  .split(", ")
+                  .map((videoUrl, index) => (
+                    <video
+                      key={index}
+                      controls
+                      src={videoUrl}
+                      className="w-full h-48 rounded-md"
+                    />
+                  ))
+              ) : (
+                <p className="text-gray-500">No video generated yet!</p>
               )}
-              */}
             </div>
             <div className="flex justify-end">
               <Button onClick={onExport} className="w-auto">
@@ -45,8 +45,6 @@ export const GeneratedVideoTab: React.FC<GeneratedVideoTabProps> = ({
               </Button>
             </div>
           </>
-        ) : (
-          <p className="text-gray-500">No video generated yet!</p>
         )}
       </CardContent>
     </Card>

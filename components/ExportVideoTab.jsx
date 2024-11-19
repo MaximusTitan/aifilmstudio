@@ -43,6 +43,12 @@ export function ExportVideoTab({
     loadFFmpeg();
   }, []);
 
+  useEffect(() => {
+    if (videoUrls && videoUrls.length > 0 && narrationAudio) {
+      handleExport(); // Automatically merge videos on mount
+    }
+  }, [videoUrls, narrationAudio]);
+
   const handleExport = async () => {
     if (!ffmpeg || !isFFmpegLoaded || videoUrls.length === 0) {
       setError("Please ensure all videos are loaded");

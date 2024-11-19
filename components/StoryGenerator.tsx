@@ -152,6 +152,7 @@ export function StoryGeneratorComponent() {
 
     setLoading(true);
     setError(null);
+    setActiveTab("generatedImages"); // Open Generated Images tab
     try {
       const responses = await Promise.all(
         currentStory.imagePrompts.map((prompt) =>
@@ -197,7 +198,7 @@ export function StoryGeneratorComponent() {
 
     setLoading(true);
     setError(null);
-
+    setActiveTab("generatedVideo"); // Open Generated Video tab
     try {
       // Collect video generation promises
       const videoPromises = currentStory.imagePrompts.map(
@@ -302,6 +303,12 @@ export function StoryGeneratorComponent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Modify handleExport to open Export Video tab and set loading
+  const handleExport = () => {
+    setActiveTab("exportVideo"); // Open Export Video tab
+    // Automatically trigger merge if possible
   };
 
   return (
