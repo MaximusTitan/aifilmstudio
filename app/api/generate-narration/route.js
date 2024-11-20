@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
-  const { story } = await request.json();
+  const { story, prompts } = await request.json();
 
-  if (!story) {
-    return NextResponse.json({ error: "Story is required" }, { status: 400 });
+  if (!story || !prompts || !Array.isArray(prompts)) {
+    return NextResponse.json(
+      { error: "Story and prompts are required" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -16,19 +19,19 @@ export async function POST(request) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
             content:
-              "Generate a very short narration script based on the following story. The script should be 1100 characters",
+              "This is a request to create a simple, clear narration script that tells a story while matching the scenes shown in each image. The narration should focus on moving the story forward rather than describing what we can already see in the visuals. Think of the narration and visuals as partners - while the images show the scene, the narration shares the story's heart, the characters' feelings, or sets the mood. Each narration line must pair with one image prompt and should not exceed 100-120 characters (approximately 5 seconds of speaking time at natural pace). Give just the narration lines without any titles or extra text. The entire script must be exactly 1100 characters long to keep the story tight and focused. Use everyday language that's easy to understand and speak naturally, as if telling a story to a friend. The narration should feel smooth and engaging, working together with the high-quality visuals to create a complete storytelling experience. Choose words that carry meaning and emotion while keeping the language simple and clear. The story should flow easily from one line to the next, making both good sense and staying within the required length.",
           },
           {
             role: "user",
-            content: story,
+            content: `Story: ${story}\nPrompts:\n${prompts.join("\n")}`,
           },
         ],
-        max_tokens: 1000,
+        max_tokens: 1000 * prompts.length, // Adjust tokens based on number of prompts
       }),
     });
 
@@ -38,13 +41,17 @@ export async function POST(request) {
     }
 
     const data = await response.json();
-    const script = data.choices[0].message.content.trim();
+    const scripts = data.choices[0].message.content
+      .trim()
+      .split("\n")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
-    return NextResponse.json({ script }, { status: 200 });
+    return NextResponse.json({ scripts }, { status: 200 });
   } catch (error) {
-    console.error("Error generating narration script:", error);
+    console.error("Error generating narration scripts:", error);
     return NextResponse.json(
-      { error: "Failed to generate narration script: " + error.message },
+      { error: "Failed to generate narration scripts: " + error.message },
       { status: 500 }
     );
   }

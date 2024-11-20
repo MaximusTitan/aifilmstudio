@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   ];
 
   if (type === "imagePrompts") {
-    systemMessage = "You are a master cinematographer and storyboard artist who excels at visual storytelling. Create cinematic image prompts that maintain perfect consistency in character appearances, lighting conditions, color palettes, and environmental details throughout the sequence. Each prompt should flow naturally into the next, as if crafting scenes for a high-end film production. Focus on photorealistic quality, precise camera angles, and emotional resonance while keeping descriptions under 400 characters.";
+    systemMessage = "You are a master cinematographer and storyboard artist who excels at visual storytelling. For each image prompt, maintain meticulous character consistency by specifying key identifying features that remain constant throughout the sequence: their physical attributes (age, height, build, facial features, hair style/color), distinct clothing elements or accessories, and characteristic expressions or mannerisms. Track any changes to the character's appearance (like dirt, injuries, or outfit modifications) and carry these changes forward in subsequent scenes. Consider these character details alongside consistent lighting conditions, color palettes, and environmental details throughout the sequence. Each prompt should provide a clear connection to the previous scene's established elements while naturally progressing the visual narrative, as if crafting scenes for a high-end film production. Focus on photorealistic quality, precise camera angles, and emotional resonance while keeping descriptions under 400 characters. Treat the character as if casting a specific actor, maintaining their unique presence and ensuring they remain instantly recognizable from every angle and in every situation.";
     
     if (!story) {
       console.error("No story provided for image prompts");
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     searchPrompt = story;
     messages = [
       { role: "system", content: systemMessage },
-      { role: "user", content: `Create a sequence of cinematic image prompts for this story: ${searchPrompt}. Each prompt must be under 400 characters and capture the scene in photorealistic detail. Include camera angles, lighting, character details, and environment specifications. Maintain strict visual consistency between prompts, especially in character appearances and lighting conditions. Generate at least 12 prompts that flow like consecutive movie scenes. Provide only the prompts, without numbers or titles.` },
+      { role: "user", content: `Create a sequence of cinematic image prompts for this story: ${searchPrompt}. Each prompt must be under 400 characters and capture the scene in photorealistic detail. Include camera angles, lighting, character details, and environment specifications. Maintain strict visual consistency between prompts, especially in character appearances and lighting conditions. Generate exactly 12 prompts that flow like consecutive movie scenes. Provide only the prompts, without numbers or titles.` },
     ];
   }
 

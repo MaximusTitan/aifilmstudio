@@ -1,64 +1,93 @@
-import React, { useState } from "react"; // Add useState import
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 type AudioTabProps = {
-  narrationAudio?: string;
+  story: string;
+  imagePrompts: string[];
+  narrations?: { script: string; audioUrl?: string; error?: string }[];
   loading: boolean;
-  onGenerateAudio: () => void;
-  onGoToImagePrompts: () => void; // Make this prop required
+  onGenerateAudio: (index: number) => void;
+  onGenerateNarrations: () => void; // Ensure this remains as () => void
+  onGenerateImages: () => void;
+  onConvertAllAudio: () => void;
 };
 
 export function AudioTab({
-  narrationAudio,
+  story,
+  imagePrompts,
+  narrations = [],
   loading,
   onGenerateAudio,
-  onGoToImagePrompts, // Destructure the required prop
+  onGenerateNarrations,
+  onGenerateImages,
+  onConvertAllAudio,
 }: AudioTabProps) {
-  const [imagePromptsLoading, setImagePromptsLoading] = useState(false); // New state
+  const [localNarrations, setLocalNarrations] = useState(narrations);
 
-  const handleGenerateImagePrompts = async () => {
-    setImagePromptsLoading(true);
-    await onGoToImagePrompts();
-    setImagePromptsLoading(false);
-  };
+  useEffect(() => {
+    setLocalNarrations(narrations);
+  }, [narrations]);
+
+  const allAudioGenerated = localNarrations.every(
+    (narration) => narration.audioUrl
+  );
 
   return (
     <Card>
       <CardContent className="space-y-4 pt-4">
-        {narrationAudio ? (
-          <>
-            <div className="rounded-lg overflow-hidden border">
-              <audio src={narrationAudio} controls className="w-full" />
+        {localNarrations.length > 0 ? (
+          localNarrations.map((narration, index) => (
+            <div key={index} className="space-y-2">
+              <p>
+                <strong> {index + 1}:</strong> {narration.script}
+              </p>
+              {narration.audioUrl ? (
+                <audio src={narration.audioUrl} controls className="w-full" />
+              ) : narration.error ? (
+                <div className="flex items-center space-x-2">
+                  <p className="text-red-500">Error: {narration.error}</p>
+                  <Button
+                    onClick={() => onGenerateAudio(index)}
+                    disabled={loading}
+                    className="w-auto"
+                  >
+                    {loading ? "Retrying..." : "Try Again"}
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-gray-500">Audio not available.</p> // Ensure fallback message is present
+              )}
             </div>
-            {/* <Button
-              onClick={onGenerateAudio}
-              className="w-full"
-              variant="secondary"
-            >
-              Regenerate Audio
-            </Button> */}
-            <div className="flex justify-end">
-              <Button
-                onClick={handleGenerateImagePrompts} // Update handler
-                className="mt-2"
-                disabled={imagePromptsLoading}
-              >
-                {imagePromptsLoading ? "Loading..." : "Generate Image Prompts"}
-              </Button>
-            </div>
-          </>
+          ))
         ) : (
-          <>
-            <p className="text-gray-500">No narration audio generated yet!</p>
+          <p className="text-gray-500">No narrations generated yet!</p>
+        )}
+
+        {/* Add Convert All to Audio button */}
+        {!allAudioGenerated && (
+          <div className="flex justify-end mt-4">
             <Button
-              onClick={onGenerateAudio}
-              className="w-full"
-              disabled={loading}
+              onClick={onConvertAllAudio} // New prop for bulk conversion
+              disabled={loading || localNarrations.length === 0}
+              className="w-auto"
             >
-              {loading ? "Generating..." : "Generate Narration Audio"}
+              {loading ? "Converting All..." : "Convert All to Audio"}
             </Button>
-          </>
+          </div>
+        )}
+
+        {/* Conditionally display the "Generate Images" button */}
+        {allAudioGenerated && (
+          <div className="flex justify-end mt-4">
+            <Button
+              onClick={onGenerateImages}
+              disabled={loading || imagePrompts.length === 0}
+              className="w-auto"
+            >
+              {loading ? "Generating Images..." : "Generate Images"}
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

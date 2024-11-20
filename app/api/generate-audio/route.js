@@ -8,8 +8,8 @@ export async function POST(request) {
   }
 
   try {
-    const apiKey = process.env.ELEVEN_LABS_API_KEY; // Ensure your API key is set in the environment variables
-    const voiceId = "9BWtsMINqrJLrRacOk9x"; // Replace with your desired voice ID
+    const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    const voiceId = "9BWtsMINqrJLrRacOk9x";
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
@@ -32,7 +32,8 @@ export async function POST(request) {
 
     const audioBuffer = await response.arrayBuffer();
 
-    return new Response(audioBuffer, {
+    // Return raw audio buffer directly
+    return new NextResponse(audioBuffer, {
       status: 200,
       headers: {
         "Content-Type": "audio/mpeg",

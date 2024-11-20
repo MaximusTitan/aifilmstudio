@@ -4,15 +4,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 
 type GeneratedImagesTabProps = {
-  generatedImages: string[];
+  generatedImages: { url: string; error?: string }[];
   loading: boolean;
   onGenerateVideo: () => void;
+  onRetryImage: (index: number) => void; // Add prop for retry
 };
 
 export function GeneratedImagesTab({
   generatedImages,
   loading,
   onGenerateVideo,
+  onRetryImage, // Destructure prop
 }: GeneratedImagesTabProps) {
   return (
     <Card>
@@ -26,16 +28,26 @@ export function GeneratedImagesTab({
             </div>
           ) : generatedImages.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {generatedImages.map((imageUrl, index) => (
-                <div
-                  key={index}
-                  className="rounded-md overflow-hidden shadow-lg"
-                >
-                  <img
-                    src={imageUrl}
-                    alt={`Generated Image ${index + 1}`}
-                    className="w-full h-auto"
-                  />
+              {generatedImages.map((image, index) => (
+                <div key={index} className="relative">
+                  {image.error ? (
+                    <div className="flex flex-col items-center justify-center h-48 bg-red-100">
+                      <p className="text-red-500">{image.error}</p>
+                      <Button
+                        onClick={() => onRetryImage(index)}
+                        disabled={loading}
+                        className="mt-2"
+                      >
+                        {loading ? "Retrying..." : "Retry"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <img
+                      src={image.url}
+                      alt={`Generated Image ${index + 1}`}
+                      className="w-full h-auto rounded-md"
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -43,10 +55,14 @@ export function GeneratedImagesTab({
             <p className="text-gray-500">No images generated yet!</p>
           )}
         </ScrollArea>
-        <div className="flex justify-end">
+        <div className="flex justify-end space-x-2">
           <Button
             onClick={onGenerateVideo}
-            disabled={loading || generatedImages.length === 0}
+            disabled={
+              loading ||
+              generatedImages.some((img) => img.error) ||
+              generatedImages.length === 0
+            }
             className="w-auto"
           >
             {loading ? "Generating..." : "Generate Video"}

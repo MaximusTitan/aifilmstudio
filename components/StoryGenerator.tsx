@@ -20,9 +20,10 @@ type Story = {
   fullprompt: string; // Changed from `fullPrompt` to `fullprompt`
   story: string;
   imagePrompts: string[];
-  generatedImages: string[];
-  generatedVideo?: string;
+  generatedImages: { url: string; error?: string }[]; // Modify to include error
+  generatedVideo: { url: string; error?: string }[]; // Remove optional modifier
   narrationAudio?: string;
+  narrations?: { script: string; audioUrl?: string; error?: string }[]; // Ensure error is included
 };
 
 export function StoryGeneratorComponent() {
@@ -33,12 +34,17 @@ export function StoryGeneratorComponent() {
     story: "",
     imagePrompts: [],
     generatedImages: [],
+    generatedVideo: [], // Initialize as empty array
+    narrations: [], // Initialize narrations
   });
   const [activeTab, setActiveTab] = useState("prompt");
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mergedVideoUrl, setMergedVideoUrl] = useState<string | null>(null); // Add state for merged video
+  const [generatedVideoError, setGeneratedVideoError] = useState<string | null>(
+    null
+  ); // Add state for video error
 
   // Fetch authenticated user's email on component mount
   useEffect(() => {
@@ -108,7 +114,7 @@ export function StoryGeneratorComponent() {
 
   // Generate image prompts
   const generateImagePrompts = async () => {
-    if (!currentStory.story) return;
+    if (!currentStory.story) return handleError("No story available!");
 
     setLoading(true);
     setError(null);
@@ -117,8 +123,8 @@ export function StoryGeneratorComponent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: prompt, // Use the original prompt
-          story: currentStory.story, // Pass the current story
+          prompt: currentStory.fullprompt,
+          story: currentStory.story,
           type: "imagePrompts",
         }),
       });
@@ -148,7 +154,8 @@ export function StoryGeneratorComponent() {
 
   // Generate images using FAL API
   const generateImages = async () => {
-    if (currentStory.imagePrompts.length === 0) return;
+    if (currentStory.imagePrompts.length === 0)
+      return handleError("No image prompts available!");
 
     setLoading(true);
     setError(null);
@@ -169,16 +176,19 @@ export function StoryGeneratorComponent() {
         )
       );
 
-      const imageUrls = await Promise.all(
+      const imageResults = await Promise.all(
         responses.map(async (response) => {
+          if (!response.ok) {
+            return { url: "", error: "Failed to generate image." };
+          }
           const data = await response.json();
-          return data.imageUrl;
+          return { url: data.imageUrl, error: undefined };
         })
       );
 
       setCurrentStory((prev) => ({
         ...prev,
-        generatedImages: imageUrls,
+        generatedImages: imageResults,
       }));
       setActiveTab("generatedImages");
     } catch (error) {
@@ -191,9 +201,10 @@ export function StoryGeneratorComponent() {
   const generateVideo = async () => {
     if (
       !currentStory.generatedImages.length ||
+      currentStory.generatedImages.some((img) => img.error) ||
       !currentStory.imagePrompts.length
     ) {
-      return handleError("No images or prompts available.");
+      return handleError("No valid images available to generate video.");
     }
 
     setLoading(true);
@@ -203,7 +214,8 @@ export function StoryGeneratorComponent() {
       // Collect video generation promises
       const videoPromises = currentStory.imagePrompts.map(
         async (prompt, index) => {
-          const imageUrl = currentStory.generatedImages[index]; // Get corresponding image for each prompt
+          const image = currentStory.generatedImages[index];
+          const imageUrl = image.url; // Get corresponding image URL
           if (!imageUrl) {
             throw new Error(
               `Image URL for prompt ${index + 1} is not available.`
@@ -215,29 +227,32 @@ export function StoryGeneratorComponent() {
             imageUrl: imageUrl,
           };
 
-          const response = await axios.post(
-            "/api/image-to-video-runway",
-            payload,
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          const response = await fetch("/api/image-to-video-runway", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
 
-          if (response.status === 200) {
-            return response.data.videoUrl; // Collect video URL
+          if (response.ok) {
+            const data = await response.json();
+            return { url: data.videoUrl, error: undefined }; // Return video object
           } else {
-            throw new Error(`Error: ${response.data.message}`);
+            const errorData = await response.json();
+            return { url: "", error: errorData.message } as {
+              url: string;
+              error: string;
+            };
           }
         }
       );
 
       // Wait for all video generation promises to resolve
-      const videoUrls = await Promise.all(videoPromises);
+      const videoResults = await Promise.all(videoPromises);
       setCurrentStory((prev) => ({
         ...prev,
-        generatedVideo: videoUrls.join(", "), // Save all generated video URLs as a single string
+        generatedVideo: videoResults, // Save generated video URLs as an array of objects
       }));
       setActiveTab("generatedVideo");
     } catch (error) {
@@ -247,53 +262,46 @@ export function StoryGeneratorComponent() {
     }
   };
 
-  // Add generateAudio function with error handling
-  const generateAudio = async () => {
-    if (!currentStory.story)
-      return handleError("No story available to generate audio.");
+  // Update the generateAudio function to handle raw audio data and create Blob URLs
+  const generateAudio = async (index: number) => {
+    const narration = currentStory.narrations?.[index];
+
+    if (!narration || !narration.script) {
+      handleError("No narration script available to generate audio.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
+
     try {
-      // Generate narration script using ChatGPT
-      const response = await fetch("/api/generate-narration", {
+      const response = await fetch("/api/generate-audio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          story: currentStory.story,
-        }),
+        body: JSON.stringify({ text: narration.script }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.error || "Failed to generate narration script."
-        );
-      }
-
-      const data = await response.json();
-      const narrationScript = data.script;
-
-      // Send script to generate-audio API
-      const audioResponse = await fetch("/api/generate-audio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: narrationScript }),
-      });
-
-      if (!audioResponse.ok) {
-        const errorData = await audioResponse.json();
         throw new Error(errorData.error || "Failed to generate audio.");
       }
 
-      const audioBlob = await audioResponse.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      const audioBlob = await response.blob(); // Receive raw audio as Blob
+      const audioUrl = URL.createObjectURL(audioBlob); // Create Blob URL
 
-      setCurrentStory((prev) => ({
-        ...prev,
-        narrationAudio: audioUrl,
-      }));
-      setActiveTab("audio");
+      // Update the specific narration's audioUrl
+      setCurrentStory((prev) => {
+        if (!prev.narrations) return prev;
+        const updatedNarrations = [...prev.narrations];
+        updatedNarrations[index] = {
+          ...updatedNarrations[index],
+          audioUrl: audioUrl, // Use the created Blob URL
+        };
+        return {
+          ...prev,
+          narrations: updatedNarrations,
+        };
+      });
     } catch (error) {
       handleError(
         error instanceof Error
@@ -305,10 +313,171 @@ export function StoryGeneratorComponent() {
     }
   };
 
+  // Define generateNarrations function
+  const generateNarrations = async (story: string, prompts: string[]) => {
+    if (!story || prompts.length === 0) {
+      handleError(
+        "Story and image prompts are required to generate narrations."
+      );
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/generate-narration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ story, prompts }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate narrations.");
+      }
+
+      const data = await response.json();
+      const scripts: string[] = data.scripts;
+
+      if (!Array.isArray(scripts) || scripts.length !== prompts.length) {
+        throw new Error("Mismatch in number of narrations returned.");
+      }
+
+      const newNarrations = scripts.map((script) => ({ script, audioUrl: "" }));
+
+      setCurrentStory((prev) => ({
+        ...prev,
+        narrations: newNarrations,
+      }));
+
+      setActiveTab("audio");
+    } catch (error) {
+      handleError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while generating narrations."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Ensure generateNarrations handles setting narrations and navigating
+  const generateNarrationsAndNavigate = async () => {
+    await generateNarrations(currentStory.story, currentStory.imagePrompts);
+    // Optionally, you can ensure navigation happens after narrations are set
+    setActiveTab("audio");
+  };
+
   // Modify handleExport to open Export Video tab and set loading
   const handleExport = () => {
     setActiveTab("exportVideo"); // Open Export Video tab
-    // Automatically trigger merge if possible
+    // Ensure mergedVideoUrl is set properly from ExportVideoTab onMergeComplete
+  };
+
+  // Update the generateAllAudio function to handle raw audio data
+  const generateAllAudio = async () => {
+    if (!currentStory.narrations || currentStory.narrations.length === 0) {
+      handleError("No narrations available to convert.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const updatedNarrations = await Promise.all(
+        currentStory.narrations.map(async (narration, index) => {
+          if (!narration.audioUrl) {
+            try {
+              const response = await fetch("/api/generate-audio", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: narration.script }),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                  errorData.error ||
+                    `Failed to generate audio for narration ${index + 1}`
+                );
+              }
+
+              const audioBlob = await response.blob(); // Receive raw audio as Blob
+              const audioUrl = URL.createObjectURL(audioBlob); // Create Blob URL
+
+              return { ...narration, audioUrl, error: undefined }; // Ensure error is undefined on success
+            } catch (err: any) {
+              console.error(
+                `Error generating audio for narration ${index + 1}:`,
+                err
+              );
+              return { ...narration, audioUrl: undefined, error: err.message };
+            }
+          }
+          return narration;
+        })
+      );
+
+      setCurrentStory((prev) => ({
+        ...prev,
+        narrations: updatedNarrations,
+      }));
+    } catch (error) {
+      handleError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while converting narrations to audio."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Retry image generation
+  const retryGenerateImage = async (index: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const prompt = currentStory.imagePrompts[index];
+      const response = await fetch("/api/generate-image-fal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          image_size: "landscape_16_9",
+          num_inference_steps: 4,
+          num_images: 1,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to regenerate image.");
+      }
+
+      const data = await response.json();
+      setCurrentStory((prev) => {
+        const updatedImages = [...prev.generatedImages];
+        updatedImages[index] = { url: data.imageUrl, error: undefined };
+        return { ...prev, generatedImages: updatedImages };
+      });
+    } catch (error) {
+      setCurrentStory((prev) => {
+        const updatedImages = [...prev.generatedImages];
+        updatedImages[index] = { url: "", error: "Failed to generate image." };
+        return { ...prev, generatedImages: updatedImages };
+      });
+      setError("An error occurred while retrying image generation.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Retry video generation
+  const retryGenerateVideo = async () => {
+    await generateVideo();
   };
 
   return (
@@ -321,8 +490,8 @@ export function StoryGeneratorComponent() {
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="prompt">Prompt</TabsTrigger>
           <TabsTrigger value="story">Story</TabsTrigger>
-          <TabsTrigger value="audio">Audio</TabsTrigger>
           <TabsTrigger value="imagePrompts">Image Prompts</TabsTrigger>
+          <TabsTrigger value="audio">Audio</TabsTrigger>{" "}
           <TabsTrigger value="generatedImages">Generated Images</TabsTrigger>
           <TabsTrigger value="generatedVideo">Generated Video</TabsTrigger>
           <TabsTrigger value="exportVideo">Export Video</TabsTrigger>
@@ -347,7 +516,7 @@ export function StoryGeneratorComponent() {
                 story: newStory,
               }));
             }}
-            onGenerateAudio={generateAudio} // Pass generateAudio instead
+            onGenerateImagePrompts={generateImagePrompts} // Pass generateImagePrompts
           />
         </TabsContent>
 
@@ -355,7 +524,8 @@ export function StoryGeneratorComponent() {
           <ImagePromptsTab
             imagePrompts={currentStory.imagePrompts}
             loading={loading}
-            onGenerateImages={generateImages}
+            onGenerateImages={generateImages} // Pass the generateImages function
+            onGenerateNarrations={generateNarrationsAndNavigate} // Updated prop
             onImagePromptsChange={(newPrompts) => {
               setCurrentStory((prev) => ({
                 ...prev,
@@ -365,39 +535,47 @@ export function StoryGeneratorComponent() {
           />
         </TabsContent>
 
+        <TabsContent value="audio">
+          <AudioTab
+            story={currentStory.story} // Pass story prop
+            imagePrompts={currentStory.imagePrompts} // Pass imagePrompts prop
+            narrations={currentStory.narrations} // Pass narrations prop
+            loading={loading}
+            onGenerateAudio={generateAudio} // Updated to accept index
+            onGenerateNarrations={generateNarrationsAndNavigate} // Update to pass the correct function
+            onGenerateImages={generateImages} // Pass generateImages function
+            onConvertAllAudio={generateAllAudio} // Pass the updated bulk conversion function
+          />
+        </TabsContent>
+
         <TabsContent value="generatedImages">
           <GeneratedImagesTab
             generatedImages={currentStory.generatedImages}
             loading={loading}
             onGenerateVideo={generateVideo}
+            onRetryImage={retryGenerateImage} // Add prop
           />
         </TabsContent>
 
         <TabsContent value="generatedVideo">
           <GeneratedVideoTab
-            generatedVideo={currentStory.generatedVideo}
-            mergedVideoUrl={mergedVideoUrl || undefined} // Pass mergedVideoUrl
-            onExport={() => setActiveTab("exportVideo")}
-          />
-        </TabsContent>
-
-        <TabsContent value="audio">
-          <AudioTab
-            narrationAudio={currentStory.narrationAudio}
-            loading={loading}
-            onGenerateAudio={generateAudio}
-            onGoToImagePrompts={generateImagePrompts} // Pass generateImagePrompts
+            generatedVideo={currentStory.generatedVideo} // Pass as array
+            onExport={handleExport}
+            onRetryVideo={retryGenerateVideo}
           />
         </TabsContent>
 
         <TabsContent value="exportVideo">
           <ExportVideoTab
-            videoUrls={currentStory.generatedVideo?.split(", ") || []}
-            narrationAudio={currentStory.narrationAudio} // Ensure it's passed
+            generatedVideo={currentStory.generatedVideo || []} // Pass full array
+            narrationAudios={
+              currentStory.narrations?.map((n) => n.audioUrl || "") || []
+            } // Pass array of audioUrls
             onMergeComplete={(url: string) => {
-              setMergedVideoUrl(url); // Update merged video URL
-              setActiveTab("exportVideo"); // Switch to Export Video tab
+              setMergedVideoUrl(url);
+              setActiveTab("exportVideo");
             }}
+            onRetryVideo={retryGenerateVideo} // Add the onRetryVideo prop
           />
         </TabsContent>
       </Tabs>

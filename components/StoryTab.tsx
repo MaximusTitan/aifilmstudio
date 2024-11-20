@@ -10,6 +10,7 @@ type StoryTabProps = {
   loading: boolean;
   onGenerateAudio?: () => void; // Add onGenerateAudio prop
   onStoryChange?: (newStory: string) => void;
+  onGenerateImagePrompts?: () => void; // Add onGenerateImagePrompts prop
 };
 
 export function StoryTab({
@@ -17,6 +18,7 @@ export function StoryTab({
   loading,
   onGenerateAudio, // Add this
   onStoryChange,
+  onGenerateImagePrompts, // Add this
 }: StoryTabProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedStory, setEditedStory] = useState(story);
@@ -73,11 +75,12 @@ export function StoryTab({
             </Button>
           )}
           <Button
-            onClick={onGenerateAudio} // Update to trigger audio generation
+            onClick={onGenerateImagePrompts} // Update to trigger image prompts generation
             disabled={loading || !editedStory}
             className="w-auto"
           >
-            {loading ? "Generating..." : "Generate Audio"}{" "}
+            {loading ? "Generating..." : "Generate Image Prompts"}{" "}
+            {/* Updated button name */}
           </Button>
         </div>
       </CardContent>

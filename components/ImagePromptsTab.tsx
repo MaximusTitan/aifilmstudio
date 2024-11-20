@@ -10,6 +10,7 @@ type ImagePromptsTabProps = {
   loading: boolean;
   onGenerateImages: () => void;
   onImagePromptsChange?: (newPrompts: string[]) => void;
+  onGenerateNarrations: () => void; // Add onGenerateNarrations prop
 };
 
 export function ImagePromptsTab({
@@ -17,6 +18,7 @@ export function ImagePromptsTab({
   loading,
   onGenerateImages,
   onImagePromptsChange,
+  onGenerateNarrations, // Ensure this is correctly mapped
 }: ImagePromptsTabProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editedPrompts, setEditedPrompts] = useState<string[]>(
@@ -110,13 +112,13 @@ export function ImagePromptsTab({
             <p className="text-gray-500">No image prompts generated yet!</p>
           )}
         </ScrollArea>
-        <div className="flex justify-end">
+        <div className="flex justify-end space-x-2">
           <Button
-            onClick={onGenerateImages}
+            onClick={onGenerateNarrations} // This now correctly triggers narration generation
             disabled={loading || editedPrompts.length === 0}
             className="w-auto"
           >
-            {loading ? "Generating..." : "Generate Images"}
+            {loading ? "Generating..." : "Generate Narrations"}{" "}
           </Button>
         </div>
       </CardContent>
