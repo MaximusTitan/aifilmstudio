@@ -57,7 +57,7 @@ export const updateSession = async (request: NextRequest) => {
 
       const { data: userData, error: verificationError } = await supabase
         .from("users")
-        .select("verified")
+        .select("verified, can_access_story")
         .eq("id", user.id)
         .single();
 
@@ -66,11 +66,21 @@ export const updateSession = async (request: NextRequest) => {
         return NextResponse.redirect(new URL("/sign-in", request.url));
       }
 
+      // Check if user can access /story
+      if (request.nextUrl.pathname.startsWith("/story")) {
+        if (!userData.can_access_story) {
+          return NextResponse.redirect(new URL("/", request.url));
+        }
+      }
+
       if (request.nextUrl.pathname === "/" && user) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
 
-      if (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/story")) {
+      if (
+        request.nextUrl.pathname.startsWith("/dashboard") ||
+        request.nextUrl.pathname.startsWith("/story")
+      ) {
         if (!userData.verified) {
           return NextResponse.redirect(new URL("/not-verified", request.url));
         }

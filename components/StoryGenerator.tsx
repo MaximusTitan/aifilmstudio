@@ -1,9 +1,8 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import axios from "axios";
+import React, { useState, useEffect } from "react"; // Add missing imports
 import { createClient } from "@/utils/supabase/client";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import axios from "axios";
 import { PromptTab } from "./PromptTab";
 import { StoryTab } from "./StoryTab";
 import { ImagePromptsTab } from "./ImagePromptsTab";
@@ -544,7 +543,6 @@ export function StoryGeneratorComponent() {
             onGenerateAudio={generateAudio} // Updated to accept index
             onGenerateNarrations={generateNarrationsAndNavigate} // Update to pass the correct function
             onGenerateImages={generateImages} // Pass generateImages function
-            onConvertAllAudio={generateAllAudio} // Pass the updated bulk conversion function
           />
         </TabsContent>
 
@@ -573,7 +571,6 @@ export function StoryGeneratorComponent() {
             } // Pass array of audioUrls
             onMergeComplete={(url: string) => {
               setMergedVideoUrl(url);
-              setActiveTab("exportVideo");
             }}
             onRetryVideo={retryGenerateVideo} // Add the onRetryVideo prop
           />

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, CheckCircle, XCircle } from "lucide-react"; // Add XCircle and CheckCircle
 import {
   Table,
   TableBody,
@@ -27,6 +27,7 @@ interface User {
   image_credits: number;
   video_credits: number;
   created_at: string;
+  can_access_story: boolean; // Add this property
 }
 
 interface Generation {
@@ -136,6 +137,21 @@ export function UsersTable({
     }
   };
 
+  const toggleAccessToStory = async (userId: string, hasAccess: boolean) => {
+    const { error } = await supabase
+      .from("users")
+      .update({ can_access_story: !hasAccess })
+      .eq("id", userId);
+
+    if (!error) {
+      setUsers(
+        users.map((user) =>
+          user.id === userId ? { ...user, can_access_story: !hasAccess } : user
+        )
+      );
+    }
+  };
+
   const updateCredits = async (
     userId: string,
     creditType: "image_credits" | "video_credits",
@@ -192,6 +208,7 @@ export function UsersTable({
               <TableHead className="w-[120px]"></TableHead>
               <TableHead className="w-[150px]">Video Credits</TableHead>
               <TableHead className="w-[120px]"></TableHead>
+              <TableHead className="w-[100px]">Story Access</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -299,15 +316,55 @@ export function UsersTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        onClick={() => toggleVerified(user.id, user.verified)}
-                        size="sm"
-                        className={
-                          user.verified ? "" : "bg-black hover:bg-black/90"
+                      <Badge
+                        variant={
+                          user.can_access_story ? "outline" : "destructive"
                         }
                       >
-                        {user.verified ? "Unverify" : "Verify"}
-                      </Button>
+                        {user.can_access_story ? "Enabled" : "Disabled"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          onClick={() => toggleVerified(user.id, user.verified)}
+                          size="sm"
+                          variant={user.verified ? "destructive" : "default"} // Changed 'success' to 'default'
+                        >
+                          {user.verified ? (
+                            <>
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Unverify
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Verify
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            toggleAccessToStory(user.id, user.can_access_story)
+                          }
+                          size="sm"
+                          variant={
+                            user.can_access_story ? "destructive" : "default"
+                          } // Changed 'success' to 'default'
+                        >
+                          {user.can_access_story ? (
+                            <>
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Disable
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Enable
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )

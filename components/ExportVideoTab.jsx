@@ -47,18 +47,18 @@ export function ExportVideoTab({
   }, []);
 
   const handleExport = async () => {
-    if (isCommandRunning) return; // Prevent multiple commands
-    setIsCommandRunning(true); // Set flag when command starts
+    if (isCommandRunning) return;
+    setIsCommandRunning(true);
 
     if (!ffmpeg || !isFFmpegLoaded || generatedVideo.length === 0) {
       setError("Please ensure all videos are loaded");
-      setIsCommandRunning(false); // Reset flag on early exit
+      setIsCommandRunning(false);
       return;
     }
 
     if (!narrationAudios || narrationAudios.length !== generatedVideo.length) {
       setError("Mismatch between videos and narration audios.");
-      setIsCommandRunning(false); // Reset flag on early exit
+      setIsCommandRunning(false);
       return;
     }
 
@@ -69,8 +69,13 @@ export function ExportVideoTab({
     try {
       const { fetchFile } = window;
 
-      // Step 1: Merge each video with its respective audio
-      const mergedVideoPromises = generatedVideo.map(async (video, index) => {
+      // Initialize an array to store merged video filenames
+      const mergedVideos = [];
+
+      // Process videos sequentially
+      for (let index = 0; index < generatedVideo.length; index++) {
+        const video = generatedVideo[index];
+
         if (video.error) {
           throw new Error(`Video ${index + 1} has an error: ${video.error}`);
         }
@@ -108,10 +113,9 @@ export function ExportVideoTab({
           `merged${index}.mp4`
         );
 
-        return `merged${index}.mp4`;
-      });
-
-      const mergedVideos = await Promise.all(mergedVideoPromises);
+        // Add merged video filename to the array
+        mergedVideos.push(`merged${index}.mp4`);
+      }
 
       // Step 2: Concatenate all merged videos into the final output
       const fileList = mergedVideos
@@ -152,7 +156,7 @@ export function ExportVideoTab({
           : "Failed to process videos. Please try again."
       );
     } finally {
-      setIsCommandRunning(false); // Reset flag after command completes
+      setIsCommandRunning(false);
       setIsLoading(false);
       setProgress(0);
     }

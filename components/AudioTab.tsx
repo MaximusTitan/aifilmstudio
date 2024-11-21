@@ -10,7 +10,6 @@ type AudioTabProps = {
   onGenerateAudio: (index: number) => void;
   onGenerateNarrations: () => void; // Ensure this remains as () => void
   onGenerateImages: () => void;
-  onConvertAllAudio: () => void;
 };
 
 export function AudioTab({
@@ -21,9 +20,9 @@ export function AudioTab({
   onGenerateAudio,
   onGenerateNarrations,
   onGenerateImages,
-  onConvertAllAudio,
 }: AudioTabProps) {
   const [localNarrations, setLocalNarrations] = useState(narrations);
+  const [processingIndex, setProcessingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setLocalNarrations(narrations);
@@ -32,6 +31,20 @@ export function AudioTab({
   const allAudioGenerated = localNarrations.every(
     (narration) => narration.audioUrl
   );
+
+  // New function to process narrations sequentially
+  const convertAllAudioSequentially = async () => {
+    for (let i = 0; i < localNarrations.length; i++) {
+      if (localNarrations[i].audioUrl) continue; // Skip if audio already generated
+      setProcessingIndex(i);
+      try {
+        await onGenerateAudio(i);
+      } catch (error) {
+        console.error(`Error generating audio for narration ${i}:`, error);
+      }
+    }
+    setProcessingIndex(null);
+  };
 
   return (
     <Card>
@@ -68,11 +81,17 @@ export function AudioTab({
         {!allAudioGenerated && (
           <div className="flex justify-end mt-4">
             <Button
-              onClick={onConvertAllAudio} // New prop for bulk conversion
-              disabled={loading || localNarrations.length === 0}
+              onClick={convertAllAudioSequentially} // Use the new function
+              disabled={
+                loading ||
+                localNarrations.length === 0 ||
+                processingIndex !== null
+              }
               className="w-auto"
             >
-              {loading ? "Converting All..." : "Convert All to Audio"}
+              {processingIndex !== null
+                ? `Converting narration ${processingIndex + 1}...`
+                : "Convert All to Audio"}
             </Button>
           </div>
         )}

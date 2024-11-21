@@ -66,10 +66,11 @@ export default async function AuthButton() {
 
   let userImageCredits = 0;
   let userVideoCredits = 0;
+  let userCanAccessStory = false;
   if (user) {
     const { data, error: creditsError } = await supabase
       .from("users")
-      .select("image_credits, video_credits")
+      .select("image_credits, video_credits, can_access_story")
       .eq("email", user.email)
       .single();
 
@@ -78,6 +79,7 @@ export default async function AuthButton() {
     } else if (data) {
       userImageCredits = data.image_credits;
       userVideoCredits = data.video_credits;
+      userCanAccessStory = data.can_access_story;
     }
   }
 
@@ -87,9 +89,11 @@ export default async function AuthButton() {
         <Button asChild size="sm" variant={"outline"}>
           <Link href="/challenge">Challenge</Link>
         </Button>
-        <Button asChild size="sm" variant={"outline"}>
-          <Link href="/story">Story</Link>
-        </Button>
+        {userCanAccessStory && (
+          <Button asChild size="sm" variant={"outline"}>
+            <Link href="/story">Story</Link>
+          </Button>
+        )}
         <Button asChild size="sm" variant={"outline"}>
           <Link href="/dashboard">Content</Link>
         </Button>

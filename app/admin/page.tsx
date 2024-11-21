@@ -18,6 +18,7 @@ interface User {
   image_credits: number;
   video_credits: number;
   created_at: string;
+  can_access_story: boolean; // Add this line
 }
 
 interface Generation {
