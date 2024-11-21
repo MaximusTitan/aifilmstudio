@@ -8,17 +8,19 @@ import { Pencil, Save } from "lucide-react";
 type StoryTabProps = {
   story: string;
   loading: boolean;
-  onGenerateAudio?: () => void; // Add onGenerateAudio prop
   onStoryChange?: (newStory: string) => void;
   onGenerateImagePrompts?: () => void; // Add onGenerateImagePrompts prop
+  narrationLines: string[]; // Add this prop
+  generatedAudio: string[]; // Add this prop
 };
 
 export function StoryTab({
   story,
   loading,
-  onGenerateAudio, // Add this
   onStoryChange,
   onGenerateImagePrompts, // Add this
+  narrationLines,
+  generatedAudio,
 }: StoryTabProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedStory, setEditedStory] = useState(story);
@@ -80,7 +82,6 @@ export function StoryTab({
             className="w-auto"
           >
             {loading ? "Generating..." : "Generate Image Prompts"}{" "}
-            {/* Updated button name */}
           </Button>
         </div>
       </CardContent>

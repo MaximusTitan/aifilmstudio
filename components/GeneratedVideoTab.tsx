@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 import { useState } from "react"; // Import useState
 
 interface GeneratedVideoTabProps {
-  generatedVideo: { url: string; error?: string }[]; // Remove optional modifier
+  generatedVideo: { url: string; error?: string }[];
   narrationAudio?: string;
   onExport?: () => void;
   onRetryVideo?: () => void; // Add prop for retry

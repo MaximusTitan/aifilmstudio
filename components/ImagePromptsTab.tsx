@@ -114,11 +114,11 @@ export function ImagePromptsTab({
         </ScrollArea>
         <div className="flex justify-end space-x-2">
           <Button
-            onClick={onGenerateNarrations} // This now correctly triggers narration generation
+            onClick={onGenerateNarrations} // Correctly trigger narration generation
             disabled={loading || editedPrompts.length === 0}
             className="w-auto"
           >
-            {loading ? "Generating..." : "Generate Narrations"}{" "}
+            {loading ? "Generating..." : "Generate Narrations"}
           </Button>
         </div>
       </CardContent>

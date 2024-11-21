@@ -88,6 +88,7 @@ export async function POST(request: Request) {
           story: result,
           image_prompts: [],
           fullprompt: prompt,
+          generated_audio: [], // Initialize generated_audio
         }]);
 
       if (insertError) {
@@ -126,6 +127,55 @@ export async function POST(request: Request) {
       if (updateError) {
         console.error("Error updating image prompts:", updateError.message);
         throw new Error("Failed to update image prompts.");
+      }
+    } else if (type === "narration" || type === "audio") {
+      // Fetch the existing story to update
+      const { data: existingStory, error: fetchError } = await supabase
+        .from("story_generations")
+        .select("*")
+        .eq("user_email", userEmail)
+        .eq("story", story) // Match by the actual story content
+        .single();
+
+      if (fetchError || !existingStory) {
+        console.error(`Error fetching story for type ${type}:`, fetchError?.message);
+        throw new Error(`Failed to find existing story for type ${type}.`);
+      }
+
+      if (type === "narration") {
+        // Save narration lines to the database
+        const narrationLines = result.split('\n').filter((line: string) => line.trim() !== '');
+        const { error: updateError } = await supabase
+          .from("story_generations")
+          .update({
+            narrations: narrationLines.map((script: string) => ({ script, audioUrl: null, error: null })),
+          })
+          .eq("id", existingStory.id);
+
+        if (updateError) {
+          console.error("Error updating narration lines:", updateError.message);
+          throw new Error("Failed to update narration lines.");
+        }
+      } else if (type === "audio") {
+        // Save generated audio URLs to the database
+        const { error: updateError } = await supabase
+          .from("story_generations")
+          .update({
+            generated_audio: result, // Rename to generated_audio
+          })
+          .eq("user_email", userEmail)
+          .eq("story", story); // Use userEmail and story to identify the record
+
+        if (updateError) {
+          console.error("Error updating generated audio:", updateError.message);
+          throw new Error("Failed to update generated audio.");
+        }
+
+        // No longer return the story ID
+        return NextResponse.json(
+          { message: "Audio generated and saved successfully." },
+          { status: 200 }
+        );
       }
     }
 

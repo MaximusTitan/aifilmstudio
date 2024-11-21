@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server"; // Ensure this import exists
 
 export async function POST(request) {
   const { story, prompts } = await request.json();
@@ -9,6 +10,8 @@ export async function POST(request) {
       { status: 400 }
     );
   }
+
+  const supabase = createClient(); // Initialize Supabase client
 
   try {
     const apiKey = process.env.OPENAI_API_KEY; // Ensure your OpenAI API key is set
@@ -46,6 +49,29 @@ export async function POST(request) {
       .split("\n")
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
+
+    // Fetch user to get email
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !userData.user) {
+      throw new Error("User not authenticated.");
+    }
+
+    const userEmail = userData.user.email;
+
+    // Save narration lines to the database
+    const { error: updateError } = await supabase
+      .from("story_generations")
+      .update({
+        narration_lines: scripts,
+      })
+      .eq("user_email", userEmail)
+      .eq("story", story); // Use userEmail and story to identify the record
+
+    if (updateError) {
+      console.error("Error saving narration lines:", updateError.message);
+      throw new Error("Failed to save narration lines.");
+    }
 
     return NextResponse.json({ scripts }, { status: 200 });
   } catch (error) {

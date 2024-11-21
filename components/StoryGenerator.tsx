@@ -15,6 +15,7 @@ import { AudioTab } from "./AudioTab"; // Add this import
 const supabase = createClient();
 
 type Story = {
+  id?: string; // Add storyId
   originalPrompt: string; // Existing field
   fullprompt: string; // Changed from `fullPrompt` to `fullprompt`
   story: string;
@@ -22,7 +23,8 @@ type Story = {
   generatedImages: { url: string; error?: string }[]; // Modify to include error
   generatedVideo: { url: string; error?: string }[]; // Remove optional modifier
   narrationAudio?: string;
-  narrations?: { script: string; audioUrl?: string; error?: string }[]; // Ensure error is included
+  narrations: { script: string; audioUrl?: string; error?: string }[]; // Make narrations non-optional
+  generatedAudio: string[]; // Ensure this prop exists
 };
 
 export function StoryGeneratorComponent() {
@@ -34,8 +36,13 @@ export function StoryGeneratorComponent() {
     imagePrompts: [],
     generatedImages: [],
     generatedVideo: [], // Initialize as empty array
-    narrations: [], // Initialize narrations
+    narrations: [], // Initialize narrations as an empty array
+    generatedAudio: [], // Initialize generatedAudio as an empty array
   });
+
+  // Remove storyId state
+  // const [storyId, setStoryId] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState("prompt");
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
@@ -277,7 +284,10 @@ export function StoryGeneratorComponent() {
       const response = await fetch("/api/generate-audio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: narration.script }),
+        body: JSON.stringify({
+          text: narration.script,
+          story: currentStory.story,
+        }), // Use story instead of storyId
       });
 
       if (!response.ok) {
@@ -285,16 +295,20 @@ export function StoryGeneratorComponent() {
         throw new Error(errorData.error || "Failed to generate audio.");
       }
 
-      const audioBlob = await response.blob(); // Receive raw audio as Blob
-      const audioUrl = URL.createObjectURL(audioBlob); // Create Blob URL
+      const data = await response.json();
+      const audioUrl = data.audioUrl; // Use the audioUrl returned by the API
+
+      if (!audioUrl) {
+        throw new Error("No audio URL returned from the API.");
+      }
 
       // Update the specific narration's audioUrl
       setCurrentStory((prev) => {
-        if (!prev.narrations) return prev;
+        if (!prev.narrations) return prev; // Ensure narrations exist
         const updatedNarrations = [...prev.narrations];
         updatedNarrations[index] = {
           ...updatedNarrations[index],
-          audioUrl: audioUrl, // Use the created Blob URL
+          audioUrl: audioUrl, // Set to the public URL
         };
         return {
           ...prev,
@@ -375,7 +389,36 @@ export function StoryGeneratorComponent() {
     // Ensure mergedVideoUrl is set properly from ExportVideoTab onMergeComplete
   };
 
-  // Update the generateAllAudio function to handle raw audio data
+  // Save generated content to the database
+  const saveGeneratedContent = async (): Promise<void> => {
+    try {
+      const response = await fetch("/api/story-generator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "audio",
+          story: currentStory.story,
+          generated_audio: currentStory.narrations.map((n) => n.audioUrl),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save generated content.");
+      }
+
+      // No need to handle storyId
+    } catch (error) {
+      handleError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while saving generated content."
+      );
+      throw error; // Re-throw the error to be handled in generateAllAudio
+    }
+  };
+
+  // Call saveGeneratedContent after generating audio
   const generateAllAudio = async () => {
     if (!currentStory.narrations || currentStory.narrations.length === 0) {
       handleError("No narrations available to convert.");
@@ -386,33 +429,15 @@ export function StoryGeneratorComponent() {
     setError(null);
 
     try {
+      await saveGeneratedContent(); // Save without storyId
+
       const updatedNarrations = await Promise.all(
         currentStory.narrations.map(async (narration, index) => {
           if (!narration.audioUrl) {
             try {
-              const response = await fetch("/api/generate-audio", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: narration.script }),
-              });
-
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(
-                  errorData.error ||
-                    `Failed to generate audio for narration ${index + 1}`
-                );
-              }
-
-              const audioBlob = await response.blob(); // Receive raw audio as Blob
-              const audioUrl = URL.createObjectURL(audioBlob); // Create Blob URL
-
-              return { ...narration, audioUrl, error: undefined }; // Ensure error is undefined on success
+              await generateAudio(index); // Remove storyId parameter
+              return { ...narration, error: undefined };
             } catch (err: any) {
-              console.error(
-                `Error generating audio for narration ${index + 1}:`,
-                err
-              );
               return { ...narration, audioUrl: undefined, error: err.message };
             }
           }
@@ -424,6 +449,7 @@ export function StoryGeneratorComponent() {
         ...prev,
         narrations: updatedNarrations,
       }));
+      // No need to call saveGeneratedContent again here if not required
     } catch (error) {
       handleError(
         error instanceof Error
@@ -479,6 +505,11 @@ export function StoryGeneratorComponent() {
     await generateVideo();
   };
 
+  // Define a handler that excludes storyId
+  const handleGenerateAudio = (index: number) => {
+    generateAudio(index);
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Story Generator</h1>
@@ -516,6 +547,8 @@ export function StoryGeneratorComponent() {
               }));
             }}
             onGenerateImagePrompts={generateImagePrompts} // Pass generateImagePrompts
+            narrationLines={currentStory.narrations.map((n) => n.script)} // Ensure narrations are always defined
+            generatedAudio={currentStory.generatedAudio} // Use generatedAudio instead of generated_audio
           />
         </TabsContent>
 
@@ -540,9 +573,10 @@ export function StoryGeneratorComponent() {
             imagePrompts={currentStory.imagePrompts} // Pass imagePrompts prop
             narrations={currentStory.narrations} // Pass narrations prop
             loading={loading}
-            onGenerateAudio={generateAudio} // Updated to accept index
+            onGenerateAudio={handleGenerateAudio} // Pass index and handle internally
             onGenerateNarrations={generateNarrationsAndNavigate} // Update to pass the correct function
             onGenerateImages={generateImages} // Pass generateImages function
+            generatedAudio={currentStory.generatedAudio} // Add this prop
           />
         </TabsContent>
 

@@ -5,11 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 type AudioTabProps = {
   story: string;
   imagePrompts: string[];
-  narrations?: { script: string; audioUrl?: string; error?: string }[];
+  narrations: { script: string; audioUrl?: string; error?: string }[];
   loading: boolean;
   onGenerateAudio: (index: number) => void;
-  onGenerateNarrations: () => void; // Ensure this remains as () => void
-  onGenerateImages: () => void;
+  onGenerateNarrations: () => Promise<void>;
+  onGenerateImages: () => Promise<void>;
+  generatedAudio: string[];
 };
 
 export function AudioTab({
@@ -20,6 +21,7 @@ export function AudioTab({
   onGenerateAudio,
   onGenerateNarrations,
   onGenerateImages,
+  generatedAudio,
 }: AudioTabProps) {
   const [localNarrations, setLocalNarrations] = useState(narrations);
   const [processingIndex, setProcessingIndex] = useState<number | null>(null);
@@ -38,7 +40,7 @@ export function AudioTab({
       if (localNarrations[i].audioUrl) continue; // Skip if audio already generated
       setProcessingIndex(i);
       try {
-        await onGenerateAudio(i);
+        await onGenerateAudio(i); // Only pass index
       } catch (error) {
         console.error(`Error generating audio for narration ${i}:`, error);
       }
@@ -69,7 +71,7 @@ export function AudioTab({
                   </Button>
                 </div>
               ) : (
-                <p className="text-gray-500">Audio not available.</p> // Ensure fallback message is present
+                <p className="text-gray-500">Audio not available.</p>
               )}
             </div>
           ))
@@ -81,7 +83,7 @@ export function AudioTab({
         {!allAudioGenerated && (
           <div className="flex justify-end mt-4">
             <Button
-              onClick={convertAllAudioSequentially} // Use the new function
+              onClick={convertAllAudioSequentially}
               disabled={
                 loading ||
                 localNarrations.length === 0 ||

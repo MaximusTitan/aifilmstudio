@@ -1,3 +1,4 @@
+import React from "react"; // Add missing import
 import { Textarea } from "./ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
