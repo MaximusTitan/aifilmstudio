@@ -9,7 +9,7 @@ fal.config({
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { prompt, image_size, num_inference_steps, num_images } = body;
+    const { prompt, image_size, num_inference_steps, num_images, story } = body; // Added 'story'
 
     const supabase = createClient();
 
@@ -156,6 +156,40 @@ export async function POST(request) {
         },
         { status: 500 }
       );
+    }
+
+    // Check if the request came from the story flow
+    if (story) {
+      // Fetch the existing story
+      const { data: existingStory, error: fetchError } = await supabase
+        .from("story_generations")
+        .select("*")
+        .eq("user_email", userEmail)
+        .eq("story", story)
+        .single();
+
+      if (fetchError || !existingStory) {
+        console.error(
+          "Error fetching story:",
+          fetchError?.message || "No story found"
+        );
+        // Optionally handle the error
+      } else {
+        // Update the 'generated_images' array
+        const updatedImages = [...existingStory.generated_images, publicURL];
+        const { error: updateError } = await supabase
+          .from("story_generations")
+          .update({ generated_images: updatedImages })
+          .eq("id", existingStory.id);
+
+        if (updateError) {
+          console.error(
+            "Error updating generated images:",
+            updateError.message
+          );
+          // Optionally handle the error
+        }
+      }
     }
 
     return NextResponse.json({ imageUrl: publicURL });

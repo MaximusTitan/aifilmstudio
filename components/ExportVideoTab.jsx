@@ -13,6 +13,8 @@ export function ExportVideoTab({
   narrationAudios,
   onMergeComplete,
   onRetryVideo,
+  story,
+  prompt, // Add this line
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -21,6 +23,31 @@ export function ExportVideoTab({
   const [ffmpeg, setFFmpeg] = useState(null);
   const [isFFmpegLoaded, setIsFFmpegLoaded] = useState(false);
   const [isCommandRunning, setIsCommandRunning] = useState(false); // Add flag for command execution
+
+  // Add a queue to manage export tasks
+  const taskQueue = [];
+  const [isTaskRunning, setIsTaskRunning] = useState(false);
+
+  // Function to process the next task in the queue
+  const processQueue = async () => {
+    if (isTaskRunning || taskQueue.length === 0) return;
+    setIsTaskRunning(true);
+    const task = taskQueue.shift();
+    try {
+      await task();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsTaskRunning(false);
+      processQueue();
+    }
+  };
+
+  // Function to add a task to the queue
+  const enqueueTask = (task) => {
+    taskQueue.push(task);
+    processQueue();
+  };
 
   useEffect(() => {
     const loadFFmpeg = async () => {
@@ -46,120 +73,163 @@ export function ExportVideoTab({
     loadFFmpeg();
   }, []);
 
-  const handleExport = async () => {
-    if (isCommandRunning) return;
-    setIsCommandRunning(true);
-
-    if (!ffmpeg || !isFFmpegLoaded || generatedVideo.length === 0) {
-      setError("Please ensure all videos are loaded");
-      setIsCommandRunning(false);
-      return;
+  // Function to upload the merged video to the server
+  const uploadFinalVideo = async (videoBlob) => {
+    const formData = new FormData();
+    formData.append("video", videoBlob, "final_output.mp4");
+    if (story) {
+      formData.append("story", story);
     }
-
-    if (!narrationAudios || narrationAudios.length !== generatedVideo.length) {
-      setError("Mismatch between videos and narration audios.");
-      setIsCommandRunning(false);
-      return;
+    if (prompt) {
+      // Add this block
+      formData.append("prompt", prompt);
     }
-
-    setIsLoading(true);
-    setProgress(0);
-    setError(null);
 
     try {
-      const { fetchFile } = window;
+      const response = await fetch("/api/upload-final-video", {
+        method: "POST",
+        body: formData,
+      });
 
-      // Initialize an array to store merged video filenames
-      const mergedVideos = [];
+      const data = await response.json();
 
-      // Process videos sequentially
-      for (let index = 0; index < generatedVideo.length; index++) {
-        const video = generatedVideo[index];
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload final video");
+      }
 
-        if (video.error) {
-          throw new Error(`Video ${index + 1} has an error: ${video.error}`);
+      console.log("Final video uploaded:", data.videoUrl);
+    } catch (error) {
+      console.error("Error uploading final video:", error);
+      setError(error.message || "Failed to upload final video");
+    }
+  };
+
+  useEffect(() => {
+    if (downloadLink && !isLoading) {
+      // Fetch the Blob from the downloadLink
+      fetch(downloadLink)
+        .then((res) => res.blob())
+        .then((videoBlob) => {
+          uploadFinalVideo(videoBlob);
+        })
+        .catch((err) => {
+          console.error("Error fetching final video blob:", err);
+        });
+    }
+  }, [downloadLink]);
+
+  // Modify handleExport to enqueue the export task
+  const handleExport = () => {
+    enqueueTask(async () => {
+      if (isCommandRunning) return;
+      setIsCommandRunning(true);
+
+      if (!ffmpeg || !isFFmpegLoaded || generatedVideo.length === 0) {
+        setError("Please ensure all videos are loaded");
+        setIsCommandRunning(false);
+        return;
+      }
+
+      if (
+        !narrationAudios ||
+        narrationAudios.length !== generatedVideo.length
+      ) {
+        setError("Mismatch between videos and narration audios.");
+        setIsCommandRunning(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setProgress(0);
+      setError(null);
+
+      try {
+        const { fetchFile } = window;
+
+        const mergedVideos = [];
+
+        for (let index = 0; index < generatedVideo.length; index++) {
+          const video = generatedVideo[index];
+
+          if (video.error) {
+            throw new Error(`Video ${index + 1} has an error: ${video.error}`);
+          }
+
+          const videoResponse = await fetch(
+            `/api/proxy-video?url=${encodeURIComponent(video.url)}`
+          );
+          const videoBlob = await videoResponse.blob();
+          const videoFile = new File([videoBlob], `video${index}.mp4`, {
+            type: "video/mp4",
+          });
+          const videoData = await fetchFile(videoFile);
+          ffmpeg.FS("writeFile", `video${index}.mp4`, videoData);
+
+          const audioResponse = await fetch(narrationAudios[index]);
+          const audioBlob = await audioResponse.blob();
+          const audioFile = new File([audioBlob], `narration${index}.mp3`, {
+            type: "audio/mpeg",
+          });
+          const audioData = await fetchFile(audioFile);
+          ffmpeg.FS("writeFile", `narration${index}.mp3`, audioData);
+
+          await ffmpeg.run(
+            "-i",
+            `video${index}.mp4`,
+            "-i",
+            `narration${index}.mp3`,
+            "-c:v",
+            "copy",
+            "-c:a",
+            "aac",
+            `merged${index}.mp4`
+          );
+
+          mergedVideos.push(`merged${index}.mp4`);
         }
 
-        // Fetch and write video file
-        const videoResponse = await fetch(
-          `/api/proxy-video?url=${encodeURIComponent(video.url)}`
+        const fileList = mergedVideos
+          .map((mergedVideo) => `file '${mergedVideo}'`)
+          .join("\n");
+        ffmpeg.FS(
+          "writeFile",
+          "filelist.txt",
+          new TextEncoder().encode(fileList)
         );
-        const videoBlob = await videoResponse.blob();
-        const videoFile = new File([videoBlob], `video${index}.mp4`, {
-          type: "video/mp4",
-        });
-        const videoData = await fetchFile(videoFile);
-        ffmpeg.FS("writeFile", `video${index}.mp4`, videoData);
 
-        // Fetch and write audio file
-        const audioResponse = await fetch(narrationAudios[index]); // Blob URL
-        const audioBlob = await audioResponse.blob();
-        const audioFile = new File([audioBlob], `narration${index}.mp3`, {
-          type: "audio/mpeg",
-        });
-        const audioData = await fetchFile(audioFile);
-        ffmpeg.FS("writeFile", `narration${index}.mp3`, audioData);
-
-        // Merge video with audio
         await ffmpeg.run(
+          "-f",
+          "concat",
+          "-safe",
+          "0",
           "-i",
-          `video${index}.mp4`,
-          "-i",
-          `narration${index}.mp3`,
-          "-c:v",
+          "filelist.txt",
+          "-c",
           "copy",
-          "-c:a",
-          "aac",
-          `merged${index}.mp4`
+          "final_output.mp4"
         );
 
-        // Add merged video filename to the array
-        mergedVideos.push(`merged${index}.mp4`);
+        const data = ffmpeg.FS("readFile", "final_output.mp4");
+        const videoBlobFinal = new Blob([data.buffer], { type: "video/mp4" });
+        const mergedVideoUrl = URL.createObjectURL(videoBlobFinal);
+        setDownloadLink(mergedVideoUrl);
+
+        if (onMergeComplete) {
+          onMergeComplete(mergedVideoUrl);
+        }
+      } catch (error) {
+        console.error("Error processing videos:", error);
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to process videos. Please try again."
+        );
+      } finally {
+        setIsCommandRunning(false);
+        setIsLoading(false);
+        setProgress(0);
       }
-
-      // Step 2: Concatenate all merged videos into the final output
-      const fileList = mergedVideos
-        .map((mergedVideo) => `file '${mergedVideo}'`)
-        .join("\n");
-      ffmpeg.FS(
-        "writeFile",
-        "filelist.txt",
-        new TextEncoder().encode(fileList)
-      );
-
-      await ffmpeg.run(
-        "-f",
-        "concat",
-        "-safe",
-        "0",
-        "-i",
-        "filelist.txt",
-        "-c",
-        "copy",
-        "final_output.mp4"
-      );
-
-      // Read the final output file and create download link
-      const data = ffmpeg.FS("readFile", "final_output.mp4");
-      const videoBlobFinal = new Blob([data.buffer], { type: "video/mp4" });
-      const mergedVideoUrl = URL.createObjectURL(videoBlobFinal);
-      setDownloadLink(mergedVideoUrl);
-
-      if (onMergeComplete) {
-        onMergeComplete(mergedVideoUrl); // Notify parent component
-      }
-    } catch (error) {
-      console.error("Error processing videos:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to process videos. Please try again."
-      );
-    } finally {
-      setIsCommandRunning(false);
-      setIsLoading(false);
-      setProgress(0);
-    }
+    });
   };
 
   return (

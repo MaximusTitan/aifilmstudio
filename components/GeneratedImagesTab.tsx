@@ -8,6 +8,7 @@ type GeneratedImagesTabProps = {
   loading: boolean;
   onGenerateVideo: () => void;
   onRetryImage: (index: number) => void; // Add prop for retry
+  onGenerateImages: () => void; // Add this line to the props
 };
 
 export function GeneratedImagesTab({
@@ -15,6 +16,7 @@ export function GeneratedImagesTab({
   loading,
   onGenerateVideo,
   onRetryImage, // Destructure prop
+  onGenerateImages, // Destructure the prop
 }: GeneratedImagesTabProps) {
   return (
     <Card>

@@ -25,6 +25,7 @@ type Story = {
   narrationAudio?: string;
   narrations: { script: string; audioUrl?: string; error?: string }[]; // Make narrations non-optional
   generatedAudio: string[]; // Ensure this prop exists
+  generated_videos?: string[]; // Add this field
 };
 
 export function StoryGeneratorComponent() {
@@ -38,6 +39,7 @@ export function StoryGeneratorComponent() {
     generatedVideo: [], // Initialize as empty array
     narrations: [], // Initialize narrations as an empty array
     generatedAudio: [], // Initialize generatedAudio as an empty array
+    generated_videos: [], // Initialize as empty array
   });
 
   // Remove storyId state
@@ -177,6 +179,7 @@ export function StoryGeneratorComponent() {
               image_size: "landscape_16_9",
               num_inference_steps: 4,
               num_images: 1,
+              story: currentStory.story, // Include 'story' parameter
             }),
           })
         )
@@ -231,6 +234,7 @@ export function StoryGeneratorComponent() {
           const payload = {
             prompt: prompt,
             imageUrl: imageUrl,
+            story: currentStory.story, // Include 'story' parameter
           };
 
           const response = await fetch("/api/image-to-video-runway", {
@@ -399,6 +403,8 @@ export function StoryGeneratorComponent() {
           type: "audio",
           story: currentStory.story,
           generated_audio: currentStory.narrations.map((n) => n.audioUrl),
+          prompt: currentStory.originalPrompt, // Ensure 'prompt' is included
+          fullprompt: currentStory.fullprompt, // Ensure 'fullprompt' is included
         }),
       });
 
@@ -431,25 +437,14 @@ export function StoryGeneratorComponent() {
     try {
       await saveGeneratedContent(); // Save without storyId
 
-      const updatedNarrations = await Promise.all(
-        currentStory.narrations.map(async (narration, index) => {
-          if (!narration.audioUrl) {
-            try {
-              await generateAudio(index); // Remove storyId parameter
-              return { ...narration, error: undefined };
-            } catch (err: any) {
-              return { ...narration, audioUrl: undefined, error: err.message };
-            }
-          }
-          return narration;
-        })
-      );
+      for (let i = 0; i < currentStory.narrations.length; i++) {
+        const narration = currentStory.narrations[i];
+        if (!narration.audioUrl) {
+          await generateAudio(i); // Wait for each audio generation to complete
+        }
+      }
 
-      setCurrentStory((prev) => ({
-        ...prev,
-        narrations: updatedNarrations,
-      }));
-      // No need to call saveGeneratedContent again here if not required
+      // Optionally, navigate or update state after all audios are generated
     } catch (error) {
       handleError(
         error instanceof Error
@@ -586,6 +581,7 @@ export function StoryGeneratorComponent() {
             loading={loading}
             onGenerateVideo={generateVideo}
             onRetryImage={retryGenerateImage} // Add prop
+            onGenerateImages={generateImages} // Add this line to pass the prop
           />
         </TabsContent>
 
@@ -607,6 +603,8 @@ export function StoryGeneratorComponent() {
               setMergedVideoUrl(url);
             }}
             onRetryVideo={retryGenerateVideo} // Add the onRetryVideo prop
+            story={currentStory.story} // Add this line
+            prompt={currentStory.originalPrompt} // Add this line
           />
         </TabsContent>
       </Tabs>

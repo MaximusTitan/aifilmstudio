@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request) {
   try {
-    const { prompt, imageUrl } = await request.json();
+    const { prompt, imageUrl, story } = await request.json(); // Added 'story'
 
     const supabase = createClient();
 
@@ -186,6 +186,40 @@ export async function POST(request) {
         },
         { status: 500 }
       );
+    }
+
+    // Check if the request came from the story flow
+    if (story) {
+      // Fetch the existing story
+      const { data: existingStory, error: fetchError } = await supabase
+        .from("story_generations")
+        .select("*")
+        .eq("user_email", userEmail)
+        .eq("story", story)
+        .single();
+
+      if (fetchError || !existingStory) {
+        console.error(
+          "Error fetching story:",
+          fetchError?.message || "No story found"
+        );
+        // Optionally handle the error
+      } else {
+        // Update the 'generated_videos' array
+        const updatedVideos = [...existingStory.generated_videos, publicUrl];
+        const { error: updateError } = await supabase
+          .from("story_generations")
+          .update({ generated_videos: updatedVideos })
+          .eq("id", existingStory.id);
+
+        if (updateError) {
+          console.error(
+            "Error updating generated videos:",
+            updateError.message
+          );
+          // Optionally handle the error
+        }
+      }
     }
 
     return NextResponse.json({ videoUrl: publicUrl });

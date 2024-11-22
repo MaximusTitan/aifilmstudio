@@ -40,7 +40,7 @@ export function AudioTab({
       if (localNarrations[i].audioUrl) continue; // Skip if audio already generated
       setProcessingIndex(i);
       try {
-        await onGenerateAudio(i); // Only pass index
+        await onGenerateAudio(i); // Wait for each audio generation to complete
       } catch (error) {
         console.error(`Error generating audio for narration ${i}:`, error);
       }
