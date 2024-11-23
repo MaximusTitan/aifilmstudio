@@ -15,7 +15,6 @@ type StoryGeneration = {
   user_email: string;
   prompt: string;
   story: string;
-  screenplay?: string;
   image_prompts: string[];
   created_at: string;
   fullprompt: string;
@@ -100,7 +99,11 @@ const MediaGridView = ({
   );
 };
 
-export function HistoryComponent() {
+type HistoryComponentProps = {
+  onLoadStory: (story: StoryGeneration) => void;
+};
+
+export function HistoryComponent({ onLoadStory }: HistoryComponentProps) {
   const [history, setHistory] = useState<StoryGeneration[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
@@ -166,16 +169,20 @@ export function HistoryComponent() {
                 {new Date(item.created_at).toLocaleDateString()}
               </span>
             </div>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => {
-                setSelectedItem(item);
-                setIsDialogOpen(true);
-              }}
-            >
-              View Details
-            </Button>
+            <div className="flex space-x-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedItem(item);
+                  setIsDialogOpen(true);
+                }}
+              >
+                View Details
+              </Button>
+              <Button variant="outline" onClick={() => onLoadStory(item)}>
+                Load
+              </Button>
+            </div>
           </Card>
         ))}
       </div>

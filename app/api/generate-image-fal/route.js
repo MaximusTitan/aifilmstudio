@@ -160,35 +160,36 @@ export async function POST(request) {
 
     // Check if the request came from the story flow
     if (story) {
-      // Fetch the existing story
-      const { data: existingStory, error: fetchError } = await supabase
+      const { data: currentData, error: fetchError } = await supabase
         .from("story_generations")
-        .select("*")
+        .select("generated_images")
         .eq("user_email", userEmail)
         .eq("story", story)
         .single();
 
-      if (fetchError || !existingStory) {
+      if (fetchError) {
         console.error(
-          "Error fetching story:",
-          fetchError?.message || "No story found"
+          "Error fetching current generated_images:",
+          fetchError.message
         );
-        // Optionally handle the error
-      } else {
-        // Update the 'generated_images' array
-        const updatedImages = [...existingStory.generated_images, publicURL];
-        const { error: updateError } = await supabase
-          .from("story_generations")
-          .update({ generated_images: updatedImages })
-          .eq("id", existingStory.id);
+        throw new Error("Failed to fetch current generated_images.");
+      }
 
-        if (updateError) {
-          console.error(
-            "Error updating generated images:",
-            updateError.message
-          );
-          // Optionally handle the error
-        }
+      const existingImages = currentData.generated_images || [];
+      const updatedImages = [...existingImages, publicURL];
+
+      // Update the generated_images array
+      const { error: updateError } = await supabase
+        .from("story_generations")
+        .update({
+          generated_images: updatedImages, // Directly set the updated array
+        })
+        .eq("user_email", userEmail)
+        .eq("story", story);
+
+      if (updateError) {
+        console.error("Error updating generated images:", updateError.message);
+        // Optionally handle the error
       }
     }
 

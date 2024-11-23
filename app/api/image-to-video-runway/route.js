@@ -190,35 +190,37 @@ export async function POST(request) {
 
     // Check if the request came from the story flow
     if (story) {
-      // Fetch the existing story
-      const { data: existingStory, error: fetchError } = await supabase
+      // Fetch existing generated_videos
+      const { data: currentData, error: fetchError } = await supabase
         .from("story_generations")
-        .select("*")
+        .select("generated_videos")
         .eq("user_email", userEmail)
         .eq("story", story)
         .single();
 
-      if (fetchError || !existingStory) {
+      if (fetchError) {
         console.error(
-          "Error fetching story:",
-          fetchError?.message || "No story found"
+          "Error fetching current generated_videos:",
+          fetchError.message
         );
-        // Optionally handle the error
-      } else {
-        // Update the 'generated_videos' array
-        const updatedVideos = [...existingStory.generated_videos, publicUrl];
-        const { error: updateError } = await supabase
-          .from("story_generations")
-          .update({ generated_videos: updatedVideos })
-          .eq("id", existingStory.id);
+        throw new Error("Failed to fetch current generated_videos.");
+      }
 
-        if (updateError) {
-          console.error(
-            "Error updating generated videos:",
-            updateError.message
-          );
-          // Optionally handle the error
-        }
+      const existingVideos = currentData.generated_videos || [];
+      const updatedVideos = [...existingVideos, publicUrl];
+
+      // Update the generated_videos array
+      const { error: updateError } = await supabase
+        .from("story_generations")
+        .update({
+          generated_videos: updatedVideos, // Directly set the updated array
+        })
+        .eq("user_email", userEmail)
+        .eq("story", story);
+
+      if (updateError) {
+        console.error("Error updating generated videos:", updateError.message);
+        // Optionally handle the error
       }
     }
 

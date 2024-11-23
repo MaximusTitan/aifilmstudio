@@ -13,32 +13,37 @@ import { createClient } from "@/utils/supabase/client";
 
 type ImageProvider = "replicate" | "fal";
 type VideoProvider = "luma" | "runway"; // Define your video providers here
+type StoryLengthOption = "3" | "6" | "12" | "custom";
 
 export default function AdminSettings() {
   const [imageProvider, setImageProvider] =
     useState<ImageProvider>("replicate");
   const [videoProvider, setVideoProvider] = useState<VideoProvider>("luma"); // Default video provider
+  const [storyLengthOption, setStoryLengthOption] =
+    useState<StoryLengthOption>("12"); // Default story length
+  const [customLength, setCustomLength] = useState<number>(12);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchCurrentProviders = async () => {
+    const fetchCurrentSettings = async () => {
       try {
-        const [
-          { data: imageData, error: imageError },
-          { data: videoData, error: videoError },
-        ] = await Promise.all([
-          supabase
+        const { data: imageData, error: imageError } = await supabase
+          .from("settings")
+          .select("value")
+          .eq("key", "image_provider")
+          .single();
+        const { data: videoData, error: videoError } = await supabase
+          .from("settings")
+          .select("value")
+          .eq("key", "video_provider")
+          .single();
+        const { data: storyLengthData, error: storyLengthError } =
+          await supabase
             .from("settings")
             .select("value")
-            .eq("key", "image_provider")
-            .single(),
-          supabase
-            .from("settings")
-            .select("value")
-            .eq("key", "video_provider")
-            .single(),
-        ]);
+            .eq("key", "story_length")
+            .single();
 
         if (imageError) {
           console.error("Error fetching current image provider:", imageError);
@@ -51,12 +56,24 @@ export default function AdminSettings() {
         } else if (videoData) {
           setVideoProvider(videoData.value as VideoProvider);
         }
+
+        if (storyLengthError) {
+          console.error("Error fetching story length:", storyLengthError);
+        } else if (storyLengthData) {
+          const length = parseInt(storyLengthData.value, 10);
+          if ([3, 6, 12].includes(length)) {
+            setStoryLengthOption(length.toString() as StoryLengthOption);
+          } else {
+            setStoryLengthOption("custom");
+            setCustomLength(length);
+          }
+        }
       } catch (error) {
-        console.error("Error fetching providers:", error);
+        console.error("Error fetching settings:", error);
       }
     };
 
-    fetchCurrentProviders();
+    fetchCurrentSettings();
   }, [supabase]);
 
   const handleImageProviderChange = async (value: ImageProvider) => {
@@ -88,6 +105,32 @@ export default function AdminSettings() {
       setVideoProvider(value);
     } catch (error) {
       console.error("Error updating video provider:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStoryLengthChange = async (option: StoryLengthOption) => {
+    setLoading(true);
+    try {
+      let length: number;
+      if (option === "custom") {
+        length = customLength;
+      } else {
+        length = parseInt(option, 10);
+      }
+      const { error } = await supabase
+        .from("settings")
+        .upsert(
+          { key: "story_length", value: length.toString() },
+          { onConflict: "key" }
+        );
+
+      if (error) throw error;
+
+      setStoryLengthOption(option);
+    } catch (error) {
+      console.error("Error updating story length:", error);
     } finally {
       setLoading(false);
     }
@@ -133,6 +176,27 @@ export default function AdminSettings() {
           <SelectContent>
             <SelectItem value="luma">Luma</SelectItem>
             <SelectItem value="runway">Runway</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Story Length Selection */}
+      <div className="space-y-2">
+        <Label htmlFor="story-length">Story Length</Label>
+        <Select
+          value={storyLengthOption}
+          onValueChange={(value: StoryLengthOption) =>
+            handleStoryLengthChange(value)
+          }
+          disabled={loading}
+        >
+          <SelectTrigger id="story-length">
+            <SelectValue placeholder="Select story length" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="3">15 Seconds</SelectItem>
+            <SelectItem value="6">30 Seconds</SelectItem>
+            <SelectItem value="12">60 Seconds</SelectItem>
           </SelectContent>
         </Select>
       </div>

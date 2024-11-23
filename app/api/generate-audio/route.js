@@ -108,17 +108,40 @@ export async function POST(request) {
 
     console.log("Updated generated_audio:", updatedAudio); // Debug log
 
-    const { error: updateError } = await supabase
-      .from("story_generations")
-      .update({
-        generated_audio: updatedAudio,
-      })
-      .eq("user_email", userEmail)
-      .eq("story", story); // Use userEmail and story to identify the record
+    // Save generated audio URL to the database
+    if (story) {
+      // Fetch existing generated_audio
+      const { data: currentData, error: fetchError } = await supabase
+        .from("story_generations")
+        .select("generated_audio")
+        .eq("user_email", userEmail)
+        .eq("story", story)
+        .single();
 
-    if (updateError) {
-      console.error("Error saving generated audio:", updateError.message);
-      throw new Error("Failed to save generated audio.");
+      if (fetchError) {
+        console.error(
+          "Error fetching current generated_audio:",
+          fetchError.message
+        );
+        throw new Error("Failed to fetch current generated_audio.");
+      }
+
+      const existingAudio = currentData.generated_audio || [];
+      const updatedAudio = [...existingAudio, publicURL];
+
+      // Update the generated_audio array
+      const { error: updateError } = await supabase
+        .from("story_generations")
+        .update({
+          generated_audio: updatedAudio, // Directly set the updated array
+        })
+        .eq("user_email", userEmail)
+        .eq("story", story);
+
+      if (updateError) {
+        console.error("Error updating generated audio:", updateError.message);
+        // Optionally handle the error
+      }
     }
 
     // Return the audio URL

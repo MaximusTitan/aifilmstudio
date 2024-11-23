@@ -406,6 +406,8 @@ export function StoryGeneratorComponent() {
           generated_audio: currentStory.narrations.map((n) => n.audioUrl),
           prompt: currentStory.originalPrompt, // Ensure 'prompt' is included
           fullprompt: currentStory.fullprompt, // Ensure 'fullprompt' is included
+          generated_images: currentStory.generatedImages.map((img) => img.url),
+          generated_videos: currentStory.generatedVideo.map((vid) => vid.url),
         }),
       });
 
@@ -504,6 +506,41 @@ export function StoryGeneratorComponent() {
   // Define a handler that excludes storyId
   const handleGenerateAudio = (index: number) => {
     generateAudio(index);
+  };
+
+  // Define the StoryGeneration type
+  type StoryGeneration = {
+    id: number;
+    user_email: string;
+    prompt: string;
+    story: string;
+    image_prompts: string[];
+    created_at: string;
+    fullprompt: string;
+    narration_lines: string[];
+    generated_audio: string[];
+    generated_images: string[];
+    generated_videos: string[];
+    final_video_url?: string;
+  };
+
+  // Modify the loadStory function to map StoryGeneration to Story
+  const loadStory = (storyGen: StoryGeneration) => {
+    const story: Story = {
+      id: storyGen.id,
+      originalPrompt: storyGen.prompt,
+      fullprompt: storyGen.fullprompt,
+      story: storyGen.story,
+      imagePrompts: storyGen.image_prompts,
+      generatedImages: storyGen.generated_images.map((url) => ({ url })),
+      generatedVideo: storyGen.generated_videos.map((url) => ({ url })),
+      narrations: storyGen.narration_lines.map((script) => ({ script })),
+      generatedAudio: storyGen.generated_audio,
+      generated_videos: storyGen.generated_videos || [],
+    };
+    setCurrentStory(story);
+    setActiveTab("story");
+    // ...additional state updates if necessary...
   };
 
   return (
@@ -619,7 +656,7 @@ export function StoryGeneratorComponent() {
       </div>
 
       {/* Add HistoryComponent below the Tabs */}
-      <HistoryComponent />
+      <HistoryComponent onLoadStory={loadStory} />
     </div>
   );
 }
