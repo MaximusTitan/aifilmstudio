@@ -10,12 +10,13 @@ import { GeneratedImagesTab } from "./GeneratedImagesTab";
 import { GeneratedVideoTab } from "./GeneratedVideoTab";
 import { ExportVideoTab } from "./ExportVideoTab";
 import { AudioTab } from "./AudioTab"; // Add this import
+import { HistoryComponent } from "./HistoryComponent"; // Import HistoryComponent
 
 // Initialize Supabase client
 const supabase = createClient();
 
 type Story = {
-  id?: string; // Add storyId
+  id?: number; // Changed from string to number
   originalPrompt: string; // Existing field
   fullprompt: string; // Changed from `fullPrompt` to `fullprompt`
   story: string;
@@ -608,6 +609,7 @@ export function StoryGeneratorComponent() {
           />
         </TabsContent>
       </Tabs>
+
       <div className="mt-4 mb-4 p-4 bg-yellow-100/25 border-l-4 border-yellow-200 text-yellow-700">
         <p className="font-semibold">Important Note:</p>
         <p>
@@ -615,6 +617,9 @@ export function StoryGeneratorComponent() {
           step carefully before proceeding to ensure optimal use of resources.
         </p>
       </div>
+
+      {/* Add HistoryComponent below the Tabs */}
+      <HistoryComponent />
     </div>
   );
 }

@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '100mb', // Adjust the limit as needed
+    },
+  },
+};
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const videoFile = formData.get("video") as File;
