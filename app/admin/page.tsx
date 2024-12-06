@@ -62,7 +62,10 @@ export default function AdminDashboard() {
       try {
         const [usersResult, generationsResult] = await Promise.all([
           supabase.from("users").select("*"),
-          supabase.from("generations").select("*"),
+          supabase
+            .from("generations")
+            .select("*")
+            .order("created_at", { ascending: false }),
         ]);
 
         if (usersResult.data) {
@@ -75,12 +78,7 @@ export default function AdminDashboard() {
         }
 
         if (generationsResult.data) {
-          const sortedGenerations = generationsResult.data.sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-          );
-          setGenerations(sortedGenerations);
+          setGenerations(generationsResult.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
