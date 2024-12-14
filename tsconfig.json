@@ -24,6 +24,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/api/geenrate-image/route.js", "components/GenerateImageFal.jsx", "app/fal/page.jsx", "app/api/generate-image/route.js", "app/api/generate-image/route.js", "app/editor/page.js", "components/ExportVideoTab.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/api/geenrate-image/route.js", "components/GenerateImageFal.jsx", "app/fal/page.jsx", "app/api/generate-image/route.js", "app/api/generate-image/route.js", "app/editor/page.js", "components/ExportVideoTab.jsx", "app/providers.js"],
   "exclude": ["node_modules"]
 }

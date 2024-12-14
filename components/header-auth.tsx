@@ -86,9 +86,9 @@ export default async function AuthButton() {
   return user ? (
     <div className="flex items-center justify-end w-full p-4">
       <div className="flex items-center gap-4">
-        <Button asChild size="sm" variant={"outline"}>
+        {/* <Button asChild size="sm" variant={"outline"}>
           <Link href="/challenge">Challenge</Link>
-        </Button>
+        </Button> */}
         {userCanAccessStory && (
           <Button asChild size="sm" variant={"outline"}>
             <Link href="/story">Story</Link>
