@@ -38,7 +38,7 @@ export async function POST(request) {
       );
     }
 
-    const result = await fal.subscribe("fal-ai/flux/dev", {
+    const result = await fal.subscribe("fal-ai/flux/schnell", {
       input: {
         prompt,
         image_size: image_size || "landscape_16_9",
