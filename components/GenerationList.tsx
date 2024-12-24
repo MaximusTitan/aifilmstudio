@@ -167,9 +167,13 @@ export default function GenerationList({
 
                 <div className="flex flex-wrap gap-2 mt-2 justify-between">
                   <Button
-                    onClick={() =>
-                      handleDownload(gen.url, `${gen.type}-${gen.id}`)
-                    }
+                    onClick={() => {
+                      const extension = gen.type === "image" ? "jpg" : "mp4";
+                      handleDownload(
+                        `${gen.url}?download=${gen.type}-${gen.id}.${extension}`,
+                        `${gen.type}-${gen.id}.${extension}`
+                      );
+                    }}
                     size="sm"
                     variant="outline"
                   >

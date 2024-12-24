@@ -54,12 +54,13 @@ export default function LatestGeneration({
 
       <div className="mt-2 flex flex-wrap gap-2">
         <Button
-          onClick={() =>
+          onClick={() => {
+            const extension = latestGeneration.type === "image" ? "jpg" : "mp4";
             handleDownload(
-              latestGeneration.url,
-              `${latestGeneration.type}-${latestGeneration.id}`
-            )
-          }
+              `${latestGeneration.url}?download=${latestGeneration.type}-${latestGeneration.id}.${extension}`,
+              `${latestGeneration.type}-${latestGeneration.id}.${extension}`
+            );
+          }}
           className="mr-2"
           variant="outline"
         >
