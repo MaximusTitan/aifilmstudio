@@ -38,6 +38,38 @@ export async function POST(request) {
       );
     }
 
+    // Add user credits check before API request
+    const { data: userData, error: userCreditsError } = await supabase
+      .from("users")
+      .select("video_credits")
+      .eq("id", userId)
+      .single();
+
+    if (userCreditsError || !userData) {
+      console.error(
+        "Error fetching user data:",
+        userCreditsError?.message || "No user data found"
+      );
+      return NextResponse.json(
+        {
+          message: "Error fetching user data",
+          error: userCreditsError?.message || "No user data found",
+        },
+        { status: 500 }
+      );
+    }
+
+    const userVideoCredits = userData.video_credits;
+    const creditsRequired = 5;
+
+    if (userVideoCredits < creditsRequired) {
+      console.warn("Not enough video credits.");
+      return NextResponse.json(
+        { message: "Not enough credits" },
+        { status: 403 }
+      );
+    }
+
     const client = new RunwayML({ apiKey: process.env.RUNWAYML_API_SECRET });
 
     const params = {
@@ -122,40 +154,9 @@ export async function POST(request) {
       .from("generated-videos")
       .getPublicUrl(videoFileName).data.publicUrl;
 
-    const { data: userData, error: userCreditsError } = await supabase
-      .from("users")
-      .select("video_credits")
-      .eq("id", userId)
-      .single();
-
-    if (userCreditsError || !userData) {
-      console.error(
-        "Error fetching user data:",
-        userCreditsError?.message || "No user data found"
-      );
-      return NextResponse.json(
-        {
-          message: "Error fetching user data",
-          error: userCreditsError?.message || "No user data found",
-        },
-        { status: 500 }
-      );
-    }
-
-    const userVideoCredits = userData.video_credits;
-    const creditsUsed = 5;
-
-    if (userVideoCredits < creditsUsed) {
-      console.warn("Not enough video credits.");
-      return NextResponse.json(
-        { message: "Not enough video credits" },
-        { status: 403 }
-      );
-    }
-
     const { error: deductError } = await supabase
       .from("users")
-      .update({ video_credits: userVideoCredits - creditsUsed })
+      .update({ video_credits: userVideoCredits - creditsRequired })
       .eq("id", userId);
 
     if (deductError) {
@@ -173,7 +174,7 @@ export async function POST(request) {
         user_email: userEmail,
         parameters: { prompt, imageUrl },
         result_path: publicUrl, // Save Supabase path
-        credits_used: creditsUsed,
+        credits_used: creditsRequired,
       },
     ]);
 

@@ -38,6 +38,35 @@ export async function POST(request) {
       );
     }
 
+    // Check if the user has enough image credits
+    const creditsUsed = 1;
+    const { data: userData, error: userCreditsError } = await supabase
+      .from("users")
+      .select("image_credits")
+      .eq("id", userId)
+      .limit(1);
+
+    if (userCreditsError || !userData || userData.length === 0) {
+      return NextResponse.json(
+        {
+          message: "Error fetching user data",
+          error: userCreditsError
+            ? userCreditsError.message
+            : "No user data found",
+        },
+        { status: 500 }
+      );
+    }
+
+    const userImageCredits = userData[0].image_credits;
+    if (userImageCredits < creditsUsed) {
+      return NextResponse.json(
+        { message: "Not enough image credits" },
+        { status: 403 }
+      );
+    }
+
+    // Proceed to send request to FAL
     const result = await fal.subscribe("fal-ai/flux/schnell", {
       input: {
         prompt,
@@ -98,33 +127,7 @@ export async function POST(request) {
       );
     }
 
-    const creditsUsed = 1;
-    const { data: userData, error: userCreditsError } = await supabase
-      .from("users")
-      .select("image_credits")
-      .eq("id", userId)
-      .limit(1);
-
-    if (userCreditsError || !userData || userData.length === 0) {
-      return NextResponse.json(
-        {
-          message: "Error fetching user data",
-          error: userCreditsError
-            ? userCreditsError.message
-            : "No user data found",
-        },
-        { status: 500 }
-      );
-    }
-
-    const userImageCredits = userData[0].image_credits;
-    if (userImageCredits < creditsUsed) {
-      return NextResponse.json(
-        { message: "Not enough image credits" },
-        { status: 403 }
-      );
-    }
-
+    // Deduct image credits after successful generation
     const { error: deductError } = await supabase
       .from("users")
       .update({ image_credits: userImageCredits - creditsUsed })

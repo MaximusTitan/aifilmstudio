@@ -116,10 +116,11 @@ export default function ContentGeneratorForm({
       setLatestGeneration(newGeneration);
     } catch (err) {
       console.error("Error in handleSubmit:", err);
-      if (axios.isAxiosError(err) && err.response) {
-        console.error("Server responded with:", err.response.data);
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        setLocalError(err.response.data.message);
+      } else {
+        setLocalError("Failed to generate content. Please try again.");
       }
-      setLocalError("Failed to generate content. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -130,7 +131,35 @@ export default function ContentGeneratorForm({
   }
 
   if (localError) {
-    return <div className="text-red-500">{localError}</div>;
+    return (
+      <div
+        className="flex items-center p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg mt-4"
+        role="alert"
+      >
+        <svg
+          className="flex-shrink-0 inline w-4 h-4 mr-3"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.993.883L9 8v3a1 1 0 001.993.117L11 11V8a1 1 0 00-1-1zm0 8a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <span className="sr-only">Error</span>
+        <div className="flex-1">
+          <span className="font-medium">{localError}</span>
+          <button
+            onClick={() => (window.location.href = "/credits")}
+            className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Recharge Credits
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

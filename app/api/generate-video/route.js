@@ -40,6 +40,36 @@ export async function POST(request) {
       );
     }
 
+    // Add check for user credits
+    const creditsUsed = 5;
+
+    const { data: userData, error: userCreditsError } = await supabase
+      .from("users")
+      .select("video_credits")
+      .eq("id", userId)
+      .limit(1);
+
+    if (userCreditsError || !userData || userData.length === 0) {
+      return NextResponse.json(
+        {
+          message: "Error fetching user data",
+          error: userCreditsError
+            ? userCreditsError.message
+            : "No user data found",
+        },
+        { status: 500 }
+      );
+    }
+
+    const userVideoCredits = userData[0].video_credits;
+
+    if (userVideoCredits < creditsUsed) {
+      return NextResponse.json(
+        { message: "Not enough video credits" },
+        { status: 403 }
+      );
+    }
+
     const client = new LumaAI({
       authToken: process.env.LUMAAI_API_KEY,
     });
@@ -91,35 +121,6 @@ export async function POST(request) {
       return NextResponse.json(
         { message: "Video URL not found" },
         { status: 404 }
-      );
-    }
-
-    const creditsUsed = 5;
-
-    const { data: userData, error: userCreditsError } = await supabase
-      .from("users")
-      .select("video_credits")
-      .eq("id", userId)
-      .limit(1);
-
-    if (userCreditsError || !userData || userData.length === 0) {
-      return NextResponse.json(
-        {
-          message: "Error fetching user data",
-          error: userCreditsError
-            ? userCreditsError.message
-            : "No user data found",
-        },
-        { status: 500 }
-      );
-    }
-
-    const userVideoCredits = userData[0].video_credits;
-
-    if (userVideoCredits < creditsUsed) {
-      return NextResponse.json(
-        { message: "Not enough video credits" },
-        { status: 403 }
       );
     }
 

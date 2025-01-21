@@ -30,6 +30,33 @@ export async function POST(request) {
     const userId = user.id;
     const userEmail = user.email;
 
+    const creditsUsed = 5;
+
+    const { data: userData, error: userCreditsError } = await supabase
+      .from("users")
+      .select("video_credits")
+      .eq("id", userId)
+      .single();
+
+    if (userCreditsError || !userData) {
+      return NextResponse.json(
+        {
+          message: "Error fetching user data",
+          error: userCreditsError?.message || "No user data found",
+        },
+        { status: 500 }
+      );
+    }
+
+    const userVideoCredits = userData.video_credits;
+
+    if (userVideoCredits < creditsUsed) {
+      return NextResponse.json(
+        { message: "Not enough video credits" },
+        { status: 403 }
+      );
+    }
+
     if (!prompt || !imageUrl) {
       return NextResponse.json(
         { message: "Prompt and image URL are required" },
@@ -90,33 +117,6 @@ export async function POST(request) {
       return NextResponse.json(
         { message: "Video URL not found" },
         { status: 404 }
-      );
-    }
-
-    const creditsUsed = 5;
-
-    const { data: userData, error: userCreditsError } = await supabase
-      .from("users")
-      .select("video_credits")
-      .eq("id", userId)
-      .single();
-
-    if (userCreditsError || !userData) {
-      return NextResponse.json(
-        {
-          message: "Error fetching user data",
-          error: userCreditsError?.message || "No user data found",
-        },
-        { status: 500 }
-      );
-    }
-
-    const userVideoCredits = userData.video_credits;
-
-    if (userVideoCredits < creditsUsed) {
-      return NextResponse.json(
-        { message: "Not enough video credits" },
-        { status: 403 }
       );
     }
 

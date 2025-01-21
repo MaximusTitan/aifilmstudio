@@ -82,7 +82,7 @@ export const signUpAction = async (formData: FormData) => {
   }
 
   let imageCredits = 25;
-  let videoCredits = 25;
+  let videoCredits = 10;
 
   const allowedDomains = ["igebra.ai", "prosoftpeople.com"];
   const emailDomain = email.split("@")[1];
